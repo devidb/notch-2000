@@ -9,11 +9,11 @@ import Cocoa
 import Combine
 import SwiftUI
 
-/// Hauteur de la fenêtre hôte. Elle doit contenir le panneau ouvert dans son
-/// état le plus grand, et surtout laisser de la place sous lui : la lueur de la
+/// Hauteur de la fenêtre hôte. Elle doit contenir le panneau ouvert, et
+/// surtout laisser de la place sous lui : la lueur de la
 /// barre déborde d'une vingtaine de points, et le bord de la fenêtre la
 /// trancherait net.
-private let hostWindowHeight: CGFloat = Theme.panelMaxSize.height + 72
+private let hostWindowHeight: CGFloat = Theme.panelSize.height + 72
 
 @MainActor
 final class NotchWindowController: NSWindowController {
@@ -53,6 +53,20 @@ final class NotchWindowController: NSWindowController {
             .sink { [weak window] status in
                 guard let window, status == .opened else { return }
                 window.makeKeyAndOrderFront(nil)
+            }
+            .store(in: &cancellables)
+
+        // Plage HDR haute tant que l'éclat HDR est actif, voir `HighDynamicRange`.
+        Settings.shared.$hdrEnabled
+            .combineLatest(
+                Timer.publish(every: HighDynamicRange.refreshInterval, on: .main, in: .common)
+                    .autoconnect()
+                    .prepend(Date())
+            )
+            .receive(on: DispatchQueue.main)
+            .sink { [weak window] enabled, _ in
+                guard let window else { return }
+                HighDynamicRange.apply(to: window, enabled: enabled)
             }
             .store(in: &cancellables)
 

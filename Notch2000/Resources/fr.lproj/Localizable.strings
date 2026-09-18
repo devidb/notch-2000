@@ -50,28 +50,6 @@
 "La session Claude Code a expiré. Reconnectez-vous avec `claude`." = "La session Claude Code a expiré. Reconnectez-vous avec `claude`.";
 "Le service a répondu %lld." = "Le service a répondu %lld.";
 "Réponse inattendue du service d'utilisation." = "Réponse inattendue du service d'utilisation.";
-/* Mise à jour */
-"RECHERCHE" = "RECHERCHE";
-"MISE À JOUR" = "MISE À JOUR";
-"TÉLÉCHARGEMENT" = "TÉLÉCHARGEMENT";
-"PRÉPARATION" = "PRÉPARATION";
-"PRÊT" = "PRÊT";
-"INSTALLATION" = "INSTALLATION";
-"À JOUR" = "À JOUR";
-"ÉCHEC" = "ÉCHEC";
-"Interrogation du serveur de mises à jour…" = "Interrogation du serveur de mises à jour…";
-"La version %@ est disponible. Vous utilisez la %@." = "La version %@ est disponible. Vous utilisez la %@.";
-"Récupération de la nouvelle version." = "Récupération de la nouvelle version.";
-"Décompression et vérification de la signature." = "Décompression et vérification de la signature.";
-"La mise à jour est prête. Notch2000 va redémarrer." = "La mise à jour est prête. Notch2000 va redémarrer.";
-"La version %@ est prête. Notch2000 va redémarrer." = "La version %@ est prête. Notch2000 va redémarrer.";
-"Installation en cours, ne quittez pas l'application." = "Installation en cours, ne quittez pas l'application.";
-"Notch2000 %@ est la dernière version." = "Notch2000 %@ est la dernière version.";
-"ANNULER" = "ANNULER";
-"INSTALLER" = "INSTALLER";
-"PLUS TARD" = "PLUS TARD";
-"REDÉMARRER" = "REDÉMARRER";
-"FERMER" = "FERMER";
 /* Touches du panneau */
 "Barre" = "Barre";
 "carrés" = "carrés";
@@ -82,8 +60,8 @@
 "Chiffres" = "Chiffres";
 "toujours" = "toujours";
 "au survol" = "au survol";
-"Mise à jour" = "Mise à jour";
 "Maintenir pour quitter" = "Maintenir pour quitter";
 "Quitter Notch2000" = "Quitter Notch2000";
 "À autoriser dans les Réglages Système" = "À autoriser dans les Réglages Système";
 "Relire les identifiants" = "Relire les identifiants";
+"Éclat HDR" = "Éclat HDR";

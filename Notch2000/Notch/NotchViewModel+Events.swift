@@ -29,7 +29,10 @@ extension NotchViewModel {
                         close()
                     }
                 case .closed, .hovered:
-                    if hoverRect.contains(location) { open() }
+                    // Au survol la forme est descendue : toute sa surface ouvre,
+                    // bande des chiffres comprise.
+                    let target = status == .hovered ? hoveredShapeRect : hoverRect
+                    if target.contains(location) { open() }
                 }
             }
             .store(in: &cancellables)
@@ -51,23 +54,6 @@ extension NotchViewModel {
             }
             .store(in: &cancellables)
 
-        // Sparkle a quelque chose à montrer, et le notch est son seul écran :
-        // sans cela, une vérification programmée n'aurait nulle part où parler.
-        NotificationCenter.default.publisher(for: .notchShouldOpen)
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.open() }
-            .store(in: &cancellables)
-
-        // Le retour haptique reste discret : au plus une impulsion par demi-seconde.
-        hapticSender
-            .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: false)
-            .sink { [weak self] _ in
-                guard let self, settings.hapticFeedback else { return }
-                guard NSEvent.pressedMouseButtons == 0 else { return }
-                NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
-            }
-            .store(in: &cancellables)
-
         // Les réglages changent l'apparence du notch : on relaie leurs notifications.
         settings.objectWillChange
             .receive(on: DispatchQueue.main)
@@ -75,13 +61,6 @@ extension NotchViewModel {
             .store(in: &cancellables)
 
         usage.objectWillChange
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.objectWillChange.send() }
-            .store(in: &cancellables)
-
-        // L'étape de mise à jour change la hauteur du panneau ouvert : sans ce
-        // relais, le bandeau s'afficherait dans une forme restée trop courte.
-        Updater.shared.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)

@@ -26,6 +26,8 @@ struct NotchRootView: View {
         // L'ouverture et la fermeture passent par les moniteurs globaux.
         .allowsHitTesting(vm.status == .opened)
         .preferredColorScheme(.dark)
+        // Autorise les couleurs HDR de la jauge sur les écrans qui les affichent.
+        .allowedDynamicRange(.high)
     }
 
     // MARK: - Forme
@@ -49,8 +51,8 @@ struct NotchRootView: View {
         // Conteneur immobile, dimensionné pour le plus grand état : les enfants
         // changent de taille, le cadre lui ne bouge pas.
         .frame(
-            width: Theme.panelMaxSize.width + tuck * 2,
-            height: Theme.panelMaxSize.height,
+            width: Theme.panelSize.width + tuck * 2,
+            height: Theme.panelSize.height,
             alignment: .top
         )
     }
@@ -98,7 +100,8 @@ struct NotchRootView: View {
                 showKitt: showsKitt,
                 colors: barColors,
                 glow: vm.settings.glowIntensity,
-                cornerRadius: vm.cornerRadius
+                cornerRadius: vm.cornerRadius,
+                hdrStops: hdrStops
             )
         } else {
             SessionBar(
@@ -108,70 +111,57 @@ struct NotchRootView: View {
                 isSyncing: vm.usage.isSyncing,
                 colors: barColors,
                 glow: vm.settings.glowIntensity,
-                cornerRadius: vm.cornerRadius
+                cornerRadius: vm.cornerRadius,
+                hdrStops: hdrStops
             )
         }
     }
 
-    /// Les chiffres logent dans les oreilles déployées, jamais sous la découpe.
-    ///
-    /// Chaque valeur est ancrée à un coin d'un cadre de taille fixe : quand le
-    /// texte change (une minute qui passe), seul son bord intérieur bouge et
-    /// aucun recalcul de pile ne vient le déplacer.
-    private var digits: some View {
-        Color.clear
-            .frame(width: expandedWidth, height: notchBandHeight)
-            .overlay(alignment: .bottomLeading) {
-                Text(vm.usage.percentLabel)
-                    .padding(.leading, 7)
-                    .padding(.bottom, digitsLift)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                Text(vm.usage.renewalLabel(vm.settings.renewalDisplay))
-                    .padding(.trailing, 7)
-                    .padding(.bottom, digitsLift)
-            }
-            .font(Theme.inlineDigits)
-            .foregroundStyle(digitsColor)
-            .lineLimit(1)
-            .fixedSize()
+    /// Chiffres poussés en HDR avec la jauge, un cran en dessous.
+    private var digitsStops: Double {
+        vm.settings.hdrEnabled ? Theme.digitsHDRStops : 0
     }
 
-    /// Hauteur des chiffres au dessus du bord : en mode carrés, ils se posent
-    /// au dessus de la rangée plutôt que dessus.
-    private var digitsLift: CGFloat {
-        vm.settings.barStyle == .dots ? Theme.dotInset + Theme.dotSize + 3 : 4
+    private var hdrStops: Double {
+        vm.settings.hdrEnabled ? Theme.hdrStops : 0
+    }
+
+    /// Les chiffres logent dans une bande sous la caméra, juste au dessus de la
+    /// jauge, chacun à côté de ce qu'il mesure : le pourcentage au bout du
+    /// remplissage, l'heure au repère du temps écoulé.
+    ///
+    /// Le cadre suit la taille finale et non celle que le ressort anime : les
+    /// chiffres ne rebondissent pas avec la forme.
+    private var digits: some View {
+        let layout = RidingDigits(fill: vm.usage.fillFraction, elapsed: vm.usage.elapsedFraction ?? 1)
+        return layout {
+            Text(vm.usage.percentLabel)
+                .foregroundStyle(barColors.base.hdr(digitsStops))
+            Text(vm.usage.renewalLabel(vm.settings.renewalDisplay))
+                .foregroundStyle(Theme.kitt.hdr(digitsStops))
+        }
+        .font(Theme.inlineDigits)
+        .lineLimit(1)
+        .frame(width: vm.deviceNotchRect.width, height: Theme.digitsBand)
+        // Au survol, la forme descend de quelques points : les chiffres la
+        // suivent, au rythme de la jauge, pour rester posés dessus.
+        .padding(.top, vm.deviceNotchRect.height + (vm.status == .hovered ? Theme.hoverLift : 0))
+        .animation(Theme.shapeAnimation, value: vm.status)
+        .animation(Theme.fillAnimation, value: vm.usage.fillFraction)
+        .animation(Theme.fillAnimation, value: vm.usage.elapsedFraction)
     }
 
     private var barColors: (base: Color, vivid: Color) {
         Theme.barColors(vm.settings.barPalette, percent: vm.usage.percent)
     }
 
-    /// Aux niveaux hauts, les chiffres empruntent la couleur de la barre.
-    private var digitsColor: Color {
-        vm.usage.isAlert || vm.usage.isAtLimit ? barColors.base : Theme.ivory(0.85)
-    }
-
-    /// Trois niveaux : absent, discret en permanence, pleinement lisible au survol.
-    /// Sans cela, activer les chiffres permanents rendrait le survol invisible.
+    /// Pleinement lisibles dès qu'ils sont affichés, au survol comme en permanence.
     private var digitsOpacity: Double {
         switch vm.status {
         case .opened: 0
         case .hovered: 1
-        case .closed: vm.settings.digitsAlwaysVisible ? 0.45 : 0
+        case .closed: vm.settings.digitsAlwaysVisible ? 1 : 0
         }
-    }
-
-    // MARK: - Mesures
-
-    /// Largeur de la forme une fois les oreilles sorties.
-    private var expandedWidth: CGFloat {
-        vm.deviceNotchRect.width + Theme.hoverWidening
-    }
-
-    /// Hauteur de la bande qui borde la découpe, débord compris.
-    private var notchBandHeight: CGFloat {
-        vm.deviceNotchRect.height + vm.overhang
     }
 
     // MARK: - Règles d'affichage
@@ -181,9 +171,58 @@ struct NotchRootView: View {
         return vm.status == .hovered || vm.settings.digitsAlwaysVisible
     }
 
-    /// Le repère disparaît pendant le survol, pour laisser la barre lisible.
+    /// Le repère reste visible au survol : l'heure s'y accroche.
     private var showsKitt: Bool {
-        guard vm.settings.kittEnabled, vm.status != .opened else { return false }
-        return vm.settings.digitsAlwaysVisible || vm.status != .hovered
+        vm.settings.kittEnabled && vm.status != .opened
+    }
+}
+
+/// Pose l'heure au dessus du repère KITT et le pourcentage au bout du remplissage.
+///
+/// L'heure a la priorité : elle reste centrée sur le repère, seuls les bords de
+/// la forme la retiennent. Quand le pourcentage la rejoindrait, c'est lui qui
+/// s'écarte et se range contre elle, du côté où se trouve la pointe.
+private struct RidingDigits: Layout {
+    var fill: Double
+    var elapsed: Double
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        proposal.replacingUnspecifiedDimensions()
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard subviews.count == 2 else { return }
+        let percent = subviews[0].sizeThatFits(.unspecified).width
+        let time = subviews[1].sizeThatFits(.unspecified).width
+        let gap = Theme.digitsGap
+        let lower = Theme.digitsInset
+        let upper = bounds.width - Theme.digitsInset
+
+        let tip = bounds.width * fill
+        let kittCenter = (bounds.width - Theme.kittWidth) * elapsed + Theme.kittWidth / 2
+
+        let timeX = clamp(kittCenter - time / 2, lower, upper - time)
+        var percentX = clamp(tip - gap - percent, lower, upper - percent)
+
+        let overlaps = percentX < timeX + time + gap && percentX + percent + gap > timeX
+        if overlaps {
+            let before = timeX - gap - percent
+            let after = timeX + time + gap
+            let tipIsBefore = tip < kittCenter
+            // Du côté de la pointe si la place le permet, sinon de l'autre.
+            if tipIsBefore {
+                percentX = before >= lower ? before : after
+            } else {
+                percentX = after + percent <= upper ? after : before
+            }
+        }
+
+        let y = bounds.midY
+        subviews[0].place(at: CGPoint(x: bounds.minX + percentX, y: y), anchor: .leading, proposal: .unspecified)
+        subviews[1].place(at: CGPoint(x: bounds.minX + timeX, y: y), anchor: .leading, proposal: .unspecified)
+    }
+
+    private func clamp(_ value: CGFloat, _ lower: CGFloat, _ upper: CGFloat) -> CGFloat {
+        min(max(value, lower), max(lower, upper))
     }
 }

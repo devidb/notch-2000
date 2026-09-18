@@ -17,6 +17,10 @@ final class NotchViewModel: NSObject, ObservableObject {
 
     /// Marge ajoutée autour de la forme pour rattraper le pointeur un peu avant le bord.
     let hoverInset: CGFloat = -4
+    /// Marge supplémentaire pour quitter le survol. La forme survolée a la même
+    /// largeur qu'au repos : sans cet écart, un pointeur qui longe le bord entre
+    /// et sort sans arrêt, et chaque entrée relance le retour haptique.
+    let unhoverInset: CGFloat = -10
 
     let settings = Settings.shared
     let usage: UsageModel
@@ -24,7 +28,7 @@ final class NotchViewModel: NSObject, ObservableObject {
     enum Status: String, Codable, Hashable {
         /// La barre seule, aux dimensions du notch.
         case closed
-        /// Les oreilles sont déployées et les chiffres apparaissent.
+        /// La forme descend sous la caméra et les chiffres apparaissent.
         case hovered
         /// Le panneau de réglages rapides est ouvert.
         case opened
@@ -33,8 +37,6 @@ final class NotchViewModel: NSObject, ObservableObject {
     @Published private(set) var status: Status = .closed
     @Published var deviceNotchRect: CGRect = .zero
     @Published var screenRect: CGRect = .zero
-
-    let hapticSender = PassthroughSubject<Void, Never>()
 
     init(usage: UsageModel) {
         self.usage = usage
@@ -54,33 +56,32 @@ final class NotchViewModel: NSObject, ObservableObject {
 
         switch status {
         case .closed:
-            // Les chiffres permanents ont besoin des oreilles, même sans survol.
-            let widened = settings.digitsAlwaysVisible ? Theme.hoverWidening : 0
-            return CGSize(width: width + widened, height: height)
+            // Les chiffres permanents ont besoin de leur bande, même sans survol.
+            let band = settings.digitsAlwaysVisible ? Theme.digitsBand : 0
+            return CGSize(width: width, height: height + band)
         case .hovered:
-            return CGSize(width: width + Theme.hoverWidening, height: height)
+            return CGSize(width: width, height: height + Theme.digitsBand + Theme.hoverLift)
         case .opened:
             return openedSize
         }
     }
 
-    /// Taille du panneau ouvert. Il se déplie un peu plus quand la mise à jour
-    /// a quelque chose à dire, plutôt que de chasser les réglages de l'écran.
-    var openedSize: CGSize {
-        Updater.shared.stage.isPresenting ? Theme.panelMaxSize : Theme.panelSize
-    }
+    /// Taille du panneau ouvert.
+    var openedSize: CGSize { Theme.panelSize }
 
     var cornerRadius: CGFloat {
         status == .opened ? Theme.cornerRadiusPanel : Theme.cornerRadiusClosed
     }
 
-    /// Zone écran occupée par la forme au repos, débord compris.
+    /// Zone écran occupée par la forme au repos, débord compris, et bande des
+    /// chiffres quand ils restent affichés.
     private var closedShapeRect: CGRect {
-        CGRect(
+        let band = settings.digitsAlwaysVisible ? Theme.digitsBand : 0
+        return CGRect(
             x: deviceNotchRect.minX,
-            y: deviceNotchRect.minY - overhang,
+            y: deviceNotchRect.minY - overhang - band,
             width: deviceNotchRect.width,
-            height: deviceNotchRect.height + overhang
+            height: deviceNotchRect.height + overhang + band
         )
     }
 
@@ -89,11 +90,11 @@ final class NotchViewModel: NSObject, ObservableObject {
         closedShapeRect.insetBy(dx: hoverInset, dy: hoverInset)
     }
 
-    /// Zone occupée une fois les oreilles déployées : le pointeur peut s'y promener
-    /// sans refermer la forme.
-    private var hoveredShapeRect: CGRect {
-        let width = deviceNotchRect.width + Theme.hoverWidening
-        let height = deviceNotchRect.height + overhang
+    /// Zone occupée une fois la bande des chiffres descendue : elle accepte le
+    /// clic d'ouverture.
+    var hoveredShapeRect: CGRect {
+        let width = deviceNotchRect.width
+        let height = deviceNotchRect.height + overhang + Theme.digitsBand + Theme.hoverLift
         return CGRect(
             x: deviceNotchRect.midX - width / 2,
             y: deviceNotchRect.maxY - height,
@@ -106,7 +107,8 @@ final class NotchViewModel: NSObject, ObservableObject {
     var activeHoverRect: CGRect {
         switch status {
         case .closed: hoverRect
-        case .hovered: hoveredShapeRect
+        // Un peu plus large que la forme : on ne quitte le survol qu'en s'en éloignant.
+        case .hovered: hoveredShapeRect.insetBy(dx: unhoverInset, dy: unhoverInset)
         case .opened: openedRect
         }
     }
@@ -151,7 +153,6 @@ final class NotchViewModel: NSObject, ObservableObject {
     func hover() {
         guard status == .closed else { return }
         withAnimation(Theme.shapeAnimation) { status = .hovered }
-        hapticSender.send()
     }
 
     func unhover() {

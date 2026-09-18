@@ -4,8 +4,9 @@ A single lit line, and nothing else.
 
 Notch2000 is a macOS app that shows how much of your current Claude session quota
 (the rolling 5 hour window) has been used, as a thin bar along the bottom edge of
-your MacBook notch. On hover, the notch widens just enough to reveal the percentage
-used and the renewal time. At the limit, the line stays full and still: there is
+your MacBook notch. On hover, the notch drops a few points below the camera to reveal
+the percentage used, riding at the tip of the fill, and the renewal time, above the
+time marker. At the limit, the line stays full and still: there is
 nothing to do, so nothing moves.
 
 Requires macOS 14 or later. On a Mac without a notch, the app falls back to a
@@ -20,8 +21,7 @@ repository and are deliberately out of scope here.
 | State | Appearance |
 | --- | --- |
 | Idle | The bar alone, filled in proportion to the session consumed |
-| Hover | The ears unfold, percentage and renewal time appear |
-| Threshold (85 %) | The percentage takes on the colour of the bar |
+| Hover | The notch drops below the camera, percentage and renewal time appear on the bar |
 | Limit (100 %) | The bar is full and still |
 | Syncing | The bar empties, a dot sweeps across it, Knight Rider style |
 
@@ -29,8 +29,9 @@ Clicking the notch opens a quick settings panel; clicking anywhere else closes i
 
 ### The time marker
 
-Enabled by default, a light marker sits on the bar at the position of the elapsed
-time within the 5 hour window. If it falls inside the amber zone, you are burning
+Enabled by default, a thin white needle rises from the bar at the position of the
+elapsed time within the 5 hour window, with a small gap cut into the fill on each side
+so it stays readable over a bright fill. If it falls inside the amber zone, you are burning
 quota faster than time is passing. In the code it still carries its original name,
 the KITT dot.
 
@@ -46,6 +47,7 @@ All settings live in `Settings.swift` and are persisted as JSON in
 | `renewalDisplay` | Right hand value: renewal time (`target`) or countdown (`countdown`) |
 | `barPalette` | `claude` (Claude orange throughout) or `consumption` (mint, amber, ember) |
 | `glowIntensity` | `soft` or `strong` halo around the bar |
+| `hdrEnabled` | Push the bar, the marker and the figures beyond SDR white on HDR displays |
 | `refreshRate` | Polling interval, 60 s or 300 s |
 | `hapticFeedback` | Haptic feedback on interaction |
 
@@ -120,6 +122,7 @@ Three layers, wired together with Combine and SwiftUI.
 | `NotchViewModel.swift` | Three state machine (`closed` / `hovered` / `opened`), geometry computed in screen coordinates |
 | `NotchViewModel+Events.swift`, `EventMonitors.swift`, `EventMonitor.swift` | Hover and clicks do not go through SwiftUI tracking: the mouse is watched globally and its position compared with the active rects |
 | `Ext+NSScreen.swift` | Notch detection and screen metrics |
+| `HighDynamicRange.swift` | Requests the high dynamic range on the notch window layers, so HDR colours hold while the app is in the background |
 | `PublishedPersist.swift` | Property wrappers persisting settings as JSON in Application Support |
 
 **Views, `Notch2000/Views/`**, pure SwiftUI
@@ -131,17 +134,17 @@ Three layers, wired together with Combine and SwiftUI.
 | `SessionBar.swift` | The bar itself: fill, glow, time marker, sync sweep |
 | `QuickPanelView.swift` | Quick settings panel |
 | `Chunky.swift` | The raised controls of the panel: a lit face sitting on a dark edge, pressing sinks the face onto its edge |
-| `UpdateView.swift` | Update progress told inside the notch instead of a Sparkle window, in place of the settings rows |
 
 **Top level**
 
 | File | Role |
 | --- | --- |
 | `main.swift` | Entry point, single instance guard, Application Support directory |
-| `AppDelegate.swift` | Destroys and rebuilds the window on every screen change |
+| `AppDelegate.swift` | Destroys and rebuilds the window when the screen geometry changes |
 | `Theme.swift` | Every visual token (colours, metrics, typography, animations, thresholds). Views must not hardcode values |
 | `Settings.swift` | User settings singleton |
-| `Updater.swift` | Sparkle integration, guarded by `#if canImport(Sparkle)` so the app stays complete without it |
+| `Updater.swift` | Sparkle integration with its standard windows, guarded by `#if canImport(Sparkle)` so the app stays complete without it |
+| `Debug/DebugWindow.swift` | Development window (forced percentage and remaining time, HDR headroom readout), commented out in releases |
 
 The Xcode project is not checked in: it is generated from `project.yml` by
 [xcodegen](https://github.com/yonaskolb/XcodeGen).
