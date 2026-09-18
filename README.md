@@ -29,7 +29,7 @@ Clicking the notch opens a quick settings panel; clicking anywhere else closes i
 
 ### The time marker
 
-Enabled by default, a thin white needle rises from the bar at the position of the
+Disabled by default. When enabled, a thin white needle rises from the bar at the position of the
 elapsed time within the 5 hour window, with a small gap cut into the fill on each side
 so it stays readable over a bright fill. If it falls inside the amber zone, you are burning
 quota faster than time is passing. In the code it still carries its original name,
@@ -38,18 +38,20 @@ the KITT dot.
 ### Settings
 
 All settings live in `Settings.swift` and are persisted as JSON in
-`~/Library/Application Support/Notch2000`:
+`~/Library/Application Support/Notch2000/Config`:
 
-| Key | Meaning |
-| --- | --- |
-| `kittEnabled` | Show the elapsed time marker on the bar |
-| `digitsAlwaysVisible` | Keep the figures visible instead of showing them on hover only |
-| `renewalDisplay` | Right hand value: renewal time (`target`) or countdown (`countdown`) |
-| `barPalette` | `claude` (Claude orange throughout) or `consumption` (mint, amber, ember) |
-| `glowIntensity` | `soft` or `strong` halo around the bar |
-| `hdrEnabled` | Push the bar, the marker and the figures beyond SDR white on HDR displays |
-| `refreshRate` | Polling interval, 60 s or 300 s |
-| `hapticFeedback` | Haptic feedback on interaction |
+| Key | Meaning | Values | Default |
+| --- | --- | --- | --- |
+| `barStyle` | How the gauge is drawn | `line`, `dots` | `line` |
+| `barPalette` | Gauge colour | `claude` (Claude orange throughout), `consumption` (mint, amber, ember by level) | `claude` |
+| `glowIntensity` | Halo around the bar | `soft`, `strong` | `strong` |
+| `hdrEnabled` | Push the bar, the marker and the figures beyond SDR white on HDR displays | `true`, `false` | `true` |
+| `kittEnabled` | Show the elapsed time marker on the bar | `true`, `false` | `false` |
+| `digitsAlwaysVisible` | Keep the figures visible instead of showing them on hover only | `true`, `false` | `false` |
+| `renewalDisplay` | Renewal value: time of day or countdown | `target`, `countdown` | `target` |
+
+The quota is read once a minute; the countdown and the time marker are recomputed
+locally in between.
 
 Launch at login is not persisted here: it reflects the real state of
 `SMAppService.mainApp`.
@@ -132,6 +134,7 @@ Three layers, wired together with Combine and SwiftUI.
 | `NotchRootView.swift` | Root view, assembles the shape, the bar and the panel |
 | `NotchShape.swift` | The notch outline |
 | `SessionBar.swift` | The bar itself: fill, glow, time marker, sync sweep |
+| `SessionDots.swift` | The same gauge drawn as a row of squares |
 | `QuickPanelView.swift` | Quick settings panel |
 | `Chunky.swift` | The raised controls of the panel: a lit face sitting on a dark edge, pressing sinks the face onto its edge |
 

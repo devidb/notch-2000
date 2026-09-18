@@ -63,7 +63,7 @@ final class Settings: ObservableObject {
     static let shared = Settings()
 
     /// Repère du temps écoulé posé sur la barre.
-    @PublishedPersist(key: "kittEnabled", defaultValue: true)
+    @PublishedPersist(key: "kittEnabled", defaultValue: false)
     var kittEnabled: Bool
 
     /// Chiffres affichés en permanence, plutôt qu'au seul survol.
