@@ -1,40 +1,89 @@
 /* Notch2000 */
 
+/* Panneau */
+"NOTCH2000" = "NOTCH2000";
 "de la session consommés" = "der Sitzung verbraucht";
 "Repère de temps" = "Zeitmarke";
 "Chiffres toujours visibles" = "Zahlen immer anzeigen";
 "Renouvellement" = "Zurücksetzung";
+"Couleur" = "Farbe";
+"Lueur" = "Schein";
 "Ouvrir à la connexion" = "Bei der Anmeldung öffnen";
-"Actualiser" = "Aktualisieren";
-"1 min" = "1 Min";
-"5 min" = "5 Min";
+"1 MIN" = "1 MIN";
+"5 MIN" = "5 MIN";
+/* Aides */
 "Marque sur la barre la part des 5 heures déjà écoulée. S'il est dans l'orange, vous consommez plus vite que le temps ne passe." = "Zeigt auf dem Balken, wie viel des Fünf-Stunden-Fensters bereits vergangen ist. Liegt die Marke im orangefarbenen Bereich, verbrauchen Sie Ihr Kontingent schneller, als die Zeit vergeht.";
 "Affiche le pourcentage et le renouvellement en permanence, au lieu du seul survol." = "Prozentwert und Zurücksetzung dauerhaft anzeigen, statt nur beim Daraufzeigen.";
-"Afficher l'heure du prochain renouvellement, ou le temps restant." = "Uhrzeit der nächsten Zurücksetzung oder die verbleibende Zeit anzeigen.";
-"Lancer Notch2000 automatiquement à l'ouverture de votre session." = "Notch2000 bei der Anmeldung automatisch starten.";
-"Fréquence de relecture du quota auprès d'Anthropic." = "Wie oft das Kontingent bei Anthropic abgefragt wird.";
-"Quitter Notch2000" = "Notch2000 beenden";
-"Lecture du quota…" = "Kontingent wird gelesen …";
+"Afficher l'heure du prochain renouvellement, ou le temps restant." = "Die nächste Zurücksetzung als Uhrzeit oder als verbleibende Zeit anzeigen.";
+"L'orange de Claude en permanence, ou une couleur qui suit la consommation : menthe, ambre puis braise." = "Durchgehend das Orange von Claude, oder eine Farbe, die dem Verbrauch folgt: Minze, Bernstein, dann Glut.";
+"Intensité du halo autour de la barre : léger ou fort." = "Stärke des Scheins um den Balken: dezent oder kräftig.";
+"Lancer Notch2000 automatiquement à l'ouverture de votre session macOS." = "Notch2000 automatisch beim Anmelden bei macOS starten.";
+"Relire le quota maintenant. %@" = "Kontingent jetzt erneut lesen. %@";
+"Rechercher une mise à jour. Tout se passe dans le notch." = "Nach einer Aktualisierung suchen. Alles geschieht in der Notch.";
+"Quitter Notch2000. La barre disparaîtra du notch." = "Notch2000 beenden. Der Balken verschwindet aus der Notch.";
+/* Connexion */
+"Lecture du quota…" = "Kontingent wird gelesen…";
 "Connecté" = "Verbunden";
-"Déconnecté" = "Getrennt";
-"Quota lu depuis la session Claude Code" = "Kontingent aus Ihrer Claude-Code-Sitzung gelesen";
+"Déconnecté" = "Nicht verbunden";
+"Lecture du quota auprès d'Anthropic…" = "Kontingent wird bei Anthropic abgefragt…";
+"Quota lu depuis la session Claude Code (%@)." = "Kontingent aus Ihrer Claude-Code-Sitzung gelesen (%@).";
+"Quota simulé par les variables d'environnement de mise au point." = "Kontingent durch die Debug-Umgebungsvariablen simuliert.";
+"trousseau" = "Schlüsselbund";
+"fichier de session" = "Sitzungsdatei";
+/* Réglages */
 "Heure cible" = "Uhrzeit";
 "Compte à rebours" = "Countdown";
-"Toutes les minutes" = "Jede Minute";
-"Toutes les 5 minutes" = "Alle 5 Minuten";
+/* Renouvellement */
 "renouvellement inconnu" = "Zurücksetzung unbekannt";
 "renouvellement dans %@" = "Zurücksetzung in %@";
 "renouvellement à %@" = "Zurücksetzung um %@";
-"Aucune session Claude Code trouvée dans le trousseau." = "Keine Claude-Code-Sitzung im Schlüsselbund gefunden.";
-"L'accès au trousseau a été refusé." = "Der Zugriff auf den Schlüsselbund wurde verweigert.";
-"Les identifiants Claude Code sont dans un format inattendu." = "Die Claude-Code-Anmeldedaten haben ein unerwartetes Format.";
-"Erreur du trousseau (code %lld)." = "Schlüsselbundfehler (Code %lld).";
+/* Identifiants */
+"Aucune session Claude Code sur ce Mac. Lancez `claude` dans un terminal, connectez-vous, puis actualisez." = "Keine Claude-Code-Sitzung auf diesem Mac. Führen Sie `claude` in einem Terminal aus, melden Sie sich an und aktualisieren Sie dann.";
+"Vous avez refusé l'accès au trousseau. Actualisez pour que macOS repose la question." = "Sie haben den Zugriff auf den Schlüsselbund verweigert. Aktualisieren Sie, damit macOS erneut fragt.";
+"Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000." = "Notch2000 darf „Claude Code-credentials“ nicht lesen. Doppelklicken Sie den Eintrag in der Schlüsselbundverwaltung, öffnen Sie den Tab „Zugriff“ und fügen Sie Notch2000 hinzu.";
+"Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez." = "Schlüsselbund gesperrt oder Dialog blockiert. Öffnen Sie die Schlüsselbundverwaltung, entsperren Sie „Anmeldung“ und aktualisieren Sie dann.";
+"Identifiants Claude Code illisibles (%@). Reconnectez-vous avec `claude`." = "Claude-Code-Anmeldedaten nicht lesbar (%@). Melden Sie sich erneut mit `claude` an.";
+"Trousseau inaccessible (code %@) : %@" = "Schlüsselbund nicht erreichbar (Code %@): %@";
+"Trousseau inaccessible (code %@)." = "Schlüsselbund nicht erreichbar (Code %@).";
+/* Service d'utilisation */
 "Trop de requêtes, nouvelle tentative dans un instant." = "Zu viele Anfragen, neuer Versuch in Kürze.";
 "La session Claude Code a expiré. Reconnectez-vous avec `claude`." = "Ihre Claude-Code-Sitzung ist abgelaufen. Melden Sie sich erneut mit `claude` an.";
-"Le service a répondu %lld." = "Der Dienst antwortete mit %lld.";
+"Le service a répondu %lld." = "Der Dienst hat %lld geantwortet.";
 "Réponse inattendue du service d'utilisation." = "Unerwartete Antwort des Nutzungsdiensts.";
-"Couleur" = "Farbe";
-"L'orange de Claude en permanence, ou une couleur qui suit la consommation : menthe, ambre puis braise." = "Durchgehend das Orange von Claude, oder eine Farbe, die dem Verbrauch folgt: Minze, Bernstein, dann Glut.";
-"Aperçu des couleurs : 35 %, 65 %, 92 %, puis le quota réel" = "Farben testen: 35 %, 65 %, 92 %, dann das echte Kontingent";
-"Lueur" = "Leuchten";
-"Intensité du halo autour de la barre : léger ou fort." = "Stärke des Leuchtens um den Balken: leicht oder stark.";
+/* Mise à jour */
+"RECHERCHE" = "SUCHE";
+"MISE À JOUR" = "AKTUALISIERUNG";
+"TÉLÉCHARGEMENT" = "DOWNLOAD";
+"PRÉPARATION" = "VORBEREITUNG";
+"PRÊT" = "BEREIT";
+"INSTALLATION" = "INSTALLATION";
+"À JOUR" = "AKTUELL";
+"ÉCHEC" = "FEHLER";
+"Interrogation du serveur de mises à jour…" = "Aktualisierungsserver wird abgefragt…";
+"La version %@ est disponible. Vous utilisez la %@." = "Version %@ ist verfügbar. Sie verwenden %@.";
+"Récupération de la nouvelle version." = "Die neue Version wird geladen.";
+"Décompression et vérification de la signature." = "Entpacken und Signatur wird geprüft.";
+"La mise à jour est prête. Notch2000 va redémarrer." = "Die Aktualisierung ist bereit. Notch2000 wird neu gestartet.";
+"La version %@ est prête. Notch2000 va redémarrer." = "Version %@ ist bereit. Notch2000 wird neu gestartet.";
+"Installation en cours, ne quittez pas l'application." = "Installation läuft, beenden Sie die App nicht.";
+"Notch2000 %@ est la dernière version." = "Notch2000 %@ ist die neueste Version.";
+"ANNULER" = "ABBRECHEN";
+"INSTALLER" = "INSTALLIEREN";
+"PLUS TARD" = "SPÄTER";
+"REDÉMARRER" = "NEU STARTEN";
+"FERMER" = "SCHLIESSEN";
+/* Touches du panneau */
+"Barre" = "Balken";
+"carrés" = "Quadrate";
+"ligne" = "Linie";
+"consommation" = "Verbrauch";
+"douce" = "sanft";
+"intense" = "intensiv";
+"Chiffres" = "Zahlen";
+"toujours" = "immer";
+"au survol" = "beim Überfahren";
+"Mise à jour" = "Update";
+"Maintenir pour quitter" = "Zum Beenden halten";
+"Quitter Notch2000" = "Notch2000 beenden";
+"À autoriser dans les Réglages Système" = "In den Systemeinstellungen freigeben";
+"Relire les identifiants" = "Anmeldedaten neu lesen";

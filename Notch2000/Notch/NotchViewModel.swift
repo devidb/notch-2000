@@ -44,10 +44,13 @@ final class NotchViewModel: NSObject, ObservableObject {
 
     // MARK: - Géométrie
 
+    /// Débord sous la découpe, selon le dessin de la jauge.
+    var overhang: CGFloat { Theme.overhang(settings.barStyle) }
+
     /// Taille de la forme noire dessinée sous le notch, selon l'état courant.
     var shapeSize: CGSize {
         let width = deviceNotchRect.width
-        let height = deviceNotchRect.height + Theme.shapeOverhang
+        let height = deviceNotchRect.height + overhang
 
         switch status {
         case .closed:
@@ -57,8 +60,14 @@ final class NotchViewModel: NSObject, ObservableObject {
         case .hovered:
             return CGSize(width: width + Theme.hoverWidening, height: height)
         case .opened:
-            return Theme.panelSize
+            return openedSize
         }
+    }
+
+    /// Taille du panneau ouvert. Il se déplie un peu plus quand la mise à jour
+    /// a quelque chose à dire, plutôt que de chasser les réglages de l'écran.
+    var openedSize: CGSize {
+        Updater.shared.stage.isPresenting ? Theme.panelMaxSize : Theme.panelSize
     }
 
     var cornerRadius: CGFloat {
@@ -69,9 +78,9 @@ final class NotchViewModel: NSObject, ObservableObject {
     private var closedShapeRect: CGRect {
         CGRect(
             x: deviceNotchRect.minX,
-            y: deviceNotchRect.minY - Theme.shapeOverhang,
+            y: deviceNotchRect.minY - overhang,
             width: deviceNotchRect.width,
-            height: deviceNotchRect.height + Theme.shapeOverhang
+            height: deviceNotchRect.height + overhang
         )
     }
 
@@ -84,7 +93,7 @@ final class NotchViewModel: NSObject, ObservableObject {
     /// sans refermer la forme.
     private var hoveredShapeRect: CGRect {
         let width = deviceNotchRect.width + Theme.hoverWidening
-        let height = deviceNotchRect.height + Theme.shapeOverhang
+        let height = deviceNotchRect.height + overhang
         return CGRect(
             x: deviceNotchRect.midX - width / 2,
             y: deviceNotchRect.maxY - height,
@@ -104,11 +113,12 @@ final class NotchViewModel: NSObject, ObservableObject {
 
     /// Zone du panneau ouvert, utilisée pour distinguer un clic intérieur d'un clic extérieur.
     var openedRect: CGRect {
-        CGRect(
-            x: screenRect.midX - Theme.panelSize.width / 2,
-            y: screenRect.maxY - Theme.panelSize.height,
-            width: Theme.panelSize.width,
-            height: Theme.panelSize.height
+        let size = openedSize
+        return CGRect(
+            x: screenRect.midX - size.width / 2,
+            y: screenRect.maxY - size.height,
+            width: size.width,
+            height: size.height
         )
     }
 
@@ -129,6 +139,8 @@ final class NotchViewModel: NSObject, ObservableObject {
         withAnimation(Theme.shapeAnimation) { status = .opened }
         NSApp.activate(ignoringOtherApps: true)
         usage.refreshNow()
+        // L'ouverture à la connexion a pu changer dans les Réglages Système.
+        settings.refreshLaunchAtLogin()
     }
 
     func close() {

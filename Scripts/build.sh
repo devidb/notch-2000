@@ -56,6 +56,11 @@ echo "Icône…"
 # telle quelle, reconnue via CFBundleIconFile.
 cp Notch2000/Resources/AppIcon.icns "$OUT/Contents/Resources/"
 
+echo "Police de marque…"
+# Déclarée par `ATSApplicationFontsPath` dans Info.plist : il suffit de la
+# déposer dans Resources pour que `Font.custom` la trouve.
+cp Notch2000/Resources/Michroma-Regular.ttf "$OUT/Contents/Resources/"
+
 echo "Localisations…"
 for lproj in Notch2000/Resources/*.lproj; do
   [ -d "$lproj" ] || continue

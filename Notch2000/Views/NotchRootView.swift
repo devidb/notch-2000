@@ -40,15 +40,17 @@ struct NotchRootView: View {
             NotchShape(cornerRadius: vm.cornerRadius, tuck: tuck)
                 .fill(.black)
                 .frame(width: size.width + tuck * 2, height: size.height)
-                .animation(Theme.shapeAnimation, value: vm.status)
+                // Suivre la taille et non l'état : le panneau se déplie aussi
+                // quand la mise à jour s'invite, sans changer d'état.
+                .animation(Theme.shapeAnimation, value: size)
 
             content(size: size)
         }
         // Conteneur immobile, dimensionné pour le plus grand état : les enfants
         // changent de taille, le cadre lui ne bouge pas.
         .frame(
-            width: Theme.panelSize.width + tuck * 2,
-            height: Theme.panelSize.height,
+            width: Theme.panelMaxSize.width + tuck * 2,
+            height: Theme.panelMaxSize.height,
             alignment: .top
         )
     }
@@ -59,7 +61,7 @@ struct NotchRootView: View {
             // en page dans une forme encore en train de s'ouvrir.
             if vm.status == .opened {
                 QuickPanelView(vm: vm)
-                    .frame(width: Theme.panelSize.width, height: Theme.panelSize.height)
+                    .frame(width: vm.openedSize.width, height: vm.openedSize.height)
                     .transition(.opacity)
                     .animation(Theme.digitsFade, value: vm.status)
             }
@@ -68,10 +70,37 @@ struct NotchRootView: View {
         // Seul le panneau est révélé par la forme : ce qui dépasse est coupé.
         .frame(width: size.width, height: size.height, alignment: .top)
         .clipShape(NotchShape(cornerRadius: vm.cornerRadius, tuck: 0))
-        .animation(Theme.shapeAnimation, value: vm.status)
+        .animation(Theme.shapeAnimation, value: size)
         // La barre est posée par dessus : elle se taille elle-même sur les coins
         // du notch, puis applique sa lueur, qui déborde donc librement.
         .overlay(alignment: .bottom) {
+            gauge
+                .frame(width: size.width, height: size.height)
+                .animation(Theme.shapeAnimation, value: size)
+        }
+        // Les chiffres sont posés par dessus, hors du sous-arbre que le ressort
+        // anime : ils ne suivent donc jamais les rebonds de la forme.
+        .overlay(alignment: .top) {
+            digits
+                .opacity(digitsOpacity)
+                .animation(Theme.digitsFade, value: digitsOpacity)
+        }
+    }
+
+    /// La jauge, trait ou carrés. Pendant la lecture du quota, le balayage de la
+    /// barre sert dans les deux cas : il n'y a pas encore de valeur à découper.
+    @ViewBuilder
+    private var gauge: some View {
+        if vm.settings.barStyle == .dots, !vm.usage.isSyncing {
+            SessionDots(
+                fill: vm.usage.fillFraction,
+                elapsed: vm.usage.elapsedFraction,
+                showKitt: showsKitt,
+                colors: barColors,
+                glow: vm.settings.glowIntensity,
+                cornerRadius: vm.cornerRadius
+            )
+        } else {
             SessionBar(
                 fill: vm.usage.fillFraction,
                 elapsed: vm.usage.elapsedFraction,
@@ -81,15 +110,6 @@ struct NotchRootView: View {
                 glow: vm.settings.glowIntensity,
                 cornerRadius: vm.cornerRadius
             )
-            .frame(width: size.width, height: size.height)
-            .animation(Theme.shapeAnimation, value: vm.status)
-        }
-        // Les chiffres sont posés par dessus, hors du sous-arbre que le ressort
-        // anime : ils ne suivent donc jamais les rebonds de la forme.
-        .overlay(alignment: .top) {
-            digits
-                .opacity(digitsOpacity)
-                .animation(Theme.digitsFade, value: digitsOpacity)
         }
     }
 
@@ -104,17 +124,23 @@ struct NotchRootView: View {
             .overlay(alignment: .bottomLeading) {
                 Text(vm.usage.percentLabel)
                     .padding(.leading, 7)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, digitsLift)
             }
             .overlay(alignment: .bottomTrailing) {
                 Text(vm.usage.renewalLabel(vm.settings.renewalDisplay))
                     .padding(.trailing, 7)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, digitsLift)
             }
             .font(Theme.inlineDigits)
             .foregroundStyle(digitsColor)
             .lineLimit(1)
             .fixedSize()
+    }
+
+    /// Hauteur des chiffres au dessus du bord : en mode carrés, ils se posent
+    /// au dessus de la rangée plutôt que dessus.
+    private var digitsLift: CGFloat {
+        vm.settings.barStyle == .dots ? Theme.dotInset + Theme.dotSize + 3 : 4
     }
 
     private var barColors: (base: Color, vivid: Color) {
@@ -145,7 +171,7 @@ struct NotchRootView: View {
 
     /// Hauteur de la bande qui borde la découpe, débord compris.
     private var notchBandHeight: CGFloat {
-        vm.deviceNotchRect.height + Theme.shapeOverhang
+        vm.deviceNotchRect.height + vm.overhang
     }
 
     // MARK: - Règles d'affichage

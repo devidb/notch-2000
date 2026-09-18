@@ -17,16 +17,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
-        usage = UsageModel(refreshInterval: TimeInterval(Settings.shared.refreshRate.rawValue))
+        // Une lecture par minute : le compte à rebours et le repère de temps
+        // sont recalculés en local, et le panneau relit le quota à son ouverture.
+        usage = UsageModel(refreshInterval: 60)
         usage.start()
-
-        // Le réglage de fréquence prend effet sans redémarrage.
-        Settings.shared.$refreshRate
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] rate in
-                self?.usage.refreshInterval = TimeInterval(rate.rawValue)
-            }
-            .store(in: &cancellables)
 
         NotificationCenter.default.addObserver(
             self,

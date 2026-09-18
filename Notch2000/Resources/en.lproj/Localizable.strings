@@ -1,40 +1,89 @@
 /* Notch2000 */
 
+/* Panneau */
+"NOTCH2000" = "NOTCH2000";
 "de la session consommés" = "of the session used";
 "Repère de temps" = "Time marker";
 "Chiffres toujours visibles" = "Always show figures";
 "Renouvellement" = "Renewal";
+"Couleur" = "Colour";
+"Lueur" = "Glow";
 "Ouvrir à la connexion" = "Open at login";
-"Actualiser" = "Refresh";
-"1 min" = "1 min";
-"5 min" = "5 min";
+"1 MIN" = "1 MIN";
+"5 MIN" = "5 MIN";
+/* Aides */
 "Marque sur la barre la part des 5 heures déjà écoulée. S'il est dans l'orange, vous consommez plus vite que le temps ne passe." = "Marks how much of the 5-hour window has elapsed. If it sits inside the orange, you are using your quota faster than time passes.";
 "Affiche le pourcentage et le renouvellement en permanence, au lieu du seul survol." = "Show the percentage and renewal at all times, instead of on hover only.";
 "Afficher l'heure du prochain renouvellement, ou le temps restant." = "Show the next renewal time, or the time left.";
-"Lancer Notch2000 automatiquement à l'ouverture de votre session." = "Launch Notch2000 automatically when you log in.";
-"Fréquence de relecture du quota auprès d'Anthropic." = "How often the quota is read from Anthropic.";
-"Quitter Notch2000" = "Quit Notch2000";
+"L'orange de Claude en permanence, ou une couleur qui suit la consommation : menthe, ambre puis braise." = "Claude's orange at all times, or a colour that follows usage: mint, amber, then ember.";
+"Intensité du halo autour de la barre : léger ou fort." = "Halo intensity around the bar: soft or strong.";
+"Lancer Notch2000 automatiquement à l'ouverture de votre session macOS." = "Launch Notch2000 automatically when you log in to macOS.";
+"Relire le quota maintenant. %@" = "Read the quota again now. %@";
+"Rechercher une mise à jour. Tout se passe dans le notch." = "Check for an update. Everything happens inside the notch.";
+"Quitter Notch2000. La barre disparaîtra du notch." = "Quit Notch2000. The bar will disappear from the notch.";
+/* Connexion */
 "Lecture du quota…" = "Reading quota…";
 "Connecté" = "Connected";
 "Déconnecté" = "Disconnected";
-"Quota lu depuis la session Claude Code" = "Quota read from your Claude Code session";
+"Lecture du quota auprès d'Anthropic…" = "Reading the quota from Anthropic…";
+"Quota lu depuis la session Claude Code (%@)." = "Quota read from your Claude Code session (%@).";
+"Quota simulé par les variables d'environnement de mise au point." = "Quota simulated by the debugging environment variables.";
+"trousseau" = "keychain";
+"fichier de session" = "session file";
+/* Réglages */
 "Heure cible" = "Target time";
 "Compte à rebours" = "Countdown";
-"Toutes les minutes" = "Every minute";
-"Toutes les 5 minutes" = "Every 5 minutes";
+/* Renouvellement */
 "renouvellement inconnu" = "renewal unknown";
 "renouvellement dans %@" = "renews in %@";
 "renouvellement à %@" = "renews at %@";
-"Aucune session Claude Code trouvée dans le trousseau." = "No Claude Code session found in the keychain.";
-"L'accès au trousseau a été refusé." = "Keychain access was denied.";
-"Les identifiants Claude Code sont dans un format inattendu." = "The Claude Code credentials are in an unexpected format.";
-"Erreur du trousseau (code %lld)." = "Keychain error (code %lld).";
+/* Identifiants */
+"Aucune session Claude Code sur ce Mac. Lancez `claude` dans un terminal, connectez-vous, puis actualisez." = "No Claude Code session on this Mac. Run `claude` in a terminal, sign in, then refresh.";
+"Vous avez refusé l'accès au trousseau. Actualisez pour que macOS repose la question." = "You denied keychain access. Refresh to let macOS ask again.";
+"Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000." = "Notch2000 is not allowed to read “Claude Code-credentials”. In Keychain Access, double-click the item, open the Access Control tab, and add Notch2000.";
+"Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez." = "Keychain locked, or the dialog was blocked. Open Keychain Access, unlock “login”, then refresh.";
+"Identifiants Claude Code illisibles (%@). Reconnectez-vous avec `claude`." = "Claude Code credentials could not be read (%@). Sign in again with `claude`.";
+"Trousseau inaccessible (code %@) : %@" = "Keychain unavailable (code %@): %@";
+"Trousseau inaccessible (code %@)." = "Keychain unavailable (code %@).";
+/* Service d'utilisation */
 "Trop de requêtes, nouvelle tentative dans un instant." = "Too many requests, retrying shortly.";
 "La session Claude Code a expiré. Reconnectez-vous avec `claude`." = "Your Claude Code session has expired. Sign in again with `claude`.";
 "Le service a répondu %lld." = "The service replied %lld.";
 "Réponse inattendue du service d'utilisation." = "Unexpected reply from the usage service.";
-"Couleur" = "Colour";
-"L'orange de Claude en permanence, ou une couleur qui suit la consommation : menthe, ambre puis braise." = "Claude's orange at all times, or a colour that follows usage: mint, amber, then ember.";
-"Aperçu des couleurs : 35 %, 65 %, 92 %, puis le quota réel" = "Preview colours: 35%, 65%, 92%, then the real quota";
-"Lueur" = "Glow";
-"Intensité du halo autour de la barre : léger ou fort." = "Halo intensity around the bar: soft or strong.";
+/* Mise à jour */
+"RECHERCHE" = "CHECKING";
+"MISE À JOUR" = "UPDATE";
+"TÉLÉCHARGEMENT" = "DOWNLOADING";
+"PRÉPARATION" = "PREPARING";
+"PRÊT" = "READY";
+"INSTALLATION" = "INSTALLING";
+"À JOUR" = "UP TO DATE";
+"ÉCHEC" = "FAILED";
+"Interrogation du serveur de mises à jour…" = "Contacting the update server…";
+"La version %@ est disponible. Vous utilisez la %@." = "Version %@ is available. You are running %@.";
+"Récupération de la nouvelle version." = "Fetching the new version.";
+"Décompression et vérification de la signature." = "Unpacking and checking the signature.";
+"La mise à jour est prête. Notch2000 va redémarrer." = "The update is ready. Notch2000 will restart.";
+"La version %@ est prête. Notch2000 va redémarrer." = "Version %@ is ready. Notch2000 will restart.";
+"Installation en cours, ne quittez pas l'application." = "Installing, do not quit the app.";
+"Notch2000 %@ est la dernière version." = "Notch2000 %@ is the latest version.";
+"ANNULER" = "CANCEL";
+"INSTALLER" = "INSTALL";
+"PLUS TARD" = "LATER";
+"REDÉMARRER" = "RESTART";
+"FERMER" = "CLOSE";
+/* Touches du panneau */
+"Barre" = "Bar";
+"carrés" = "squares";
+"ligne" = "line";
+"consommation" = "usage";
+"douce" = "soft";
+"intense" = "strong";
+"Chiffres" = "Figures";
+"toujours" = "always";
+"au survol" = "on hover";
+"Mise à jour" = "Update";
+"Maintenir pour quitter" = "Hold to quit";
+"Quitter Notch2000" = "Quit Notch2000";
+"À autoriser dans les Réglages Système" = "Approve it in System Settings";
+"Relire les identifiants" = "Read credentials again";

@@ -19,6 +19,8 @@ final class UsageModel: ObservableObject {
     }
 
     @Published private(set) var state: State = .syncing
+    /// Dépôt d'où sont venus les derniers identifiants utilisés, montré au pied du panneau.
+    @Published private(set) var credentialSource: CredentialSource?
     /// Pourcentage forcé pour prévisualiser les couleurs. `nil` = valeur réelle.
     @Published private(set) var previewPercent: Double?
     /// Recalculé périodiquement pour faire vivre le compte à rebours et le repère de temps.
@@ -81,8 +83,9 @@ final class UsageModel: ObservableObject {
     @discardableResult
     private func refreshOnce() async -> TimeInterval {
         do {
-            let snapshot = try await service.fetch()
+            let (snapshot, source) = try await service.fetch()
             state = .live(snapshot)
+            credentialSource = source
             now = Date()
             return refreshInterval
         } catch let error as UsageError {
@@ -95,15 +98,27 @@ final class UsageModel: ObservableObject {
                 return refreshInterval
             }
             state = .unavailable(error.localizedDescription)
+            credentialSource = nil
             return max(refreshInterval, 60)
         } catch {
             state = .unavailable(error.localizedDescription)
+            credentialSource = nil
             return max(refreshInterval, 60)
         }
     }
 
     func refreshNow() {
         Task { await refreshOnce() }
+    }
+
+    /// Oublie le jeton en mémoire et relit le dépôt : macOS redemande alors
+    /// l'accès au trousseau, ce qui permet de réparer un refus d'autorisation.
+    func reauthenticate() {
+        state = .syncing
+        Task {
+            await service.forgetCredentials()
+            await refreshOnce()
+        }
     }
 
     // MARK: - Valeurs dérivées
