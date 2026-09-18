@@ -7,6 +7,16 @@
 
 import SwiftUI
 
+extension Color {
+    /// La couleur poussée au delà du blanc SDR sur les écrans qui le permettent.
+    /// Avant macOS 26, ou à 0 diaphragme, elle reste inchangée.
+    func hdr(_ stops: Double) -> Color {
+        guard stops > 0 else { return self }
+        if #available(macOS 26, *) { return exposureAdjust(stops) }
+        return self
+    }
+}
+
 enum Theme {
     // MARK: - Couleurs
 
@@ -104,9 +114,17 @@ enum Theme {
     static let dotInset: CGFloat = 4
     /// Carré éteint : juste assez visible pour lire la graduation.
     static let dotOff = Color(red: 0x1C / 255, green: 0x1B / 255, blue: 0x19 / 255)
-    /// Élargissement total au survol, soit 42 pt par oreille : de quoi loger
-    /// les chiffres sans les serrer contre la découpe.
-    static let hoverWidening: CGFloat = 84
+    /// Bande ajoutée sous la caméra au survol pour loger les chiffres. La forme
+    /// descend au lieu de s'élargir : elle ne gagne rien sur la barre de menus.
+    static let digitsBand: CGFloat = 14
+    /// Surcroît de hauteur au survol : la forme descend un peu plus, comme une
+    /// touche qui se soulève, et signale le survol même quand les chiffres sont
+    /// affichés en permanence.
+    static let hoverLift: CGFloat = 3
+    /// Retrait minimal des chiffres par rapport aux bords de la forme.
+    static let digitsInset: CGFloat = 8
+    /// Écart entre un chiffre et ce qu'il désigne, ou entre les deux chiffres.
+    static let digitsGap: CGFloat = 4
     /// Taille du panneau, seul écran de réglages de l'app : deux valeurs, deux
     /// rangées de touches et une ligne d'aide.
     static let panelSize = CGSize(width: 360, height: 232)
@@ -121,14 +139,6 @@ enum Theme {
     /// Rouge du bouton Quitter pendant l'appui.
     static let quitFill = emberVivid
 
-    /// Bandeau ajouté sous le panneau quand une mise à jour a quelque chose à
-    /// dire. Le notch se déplie d'autant : les réglages restent visibles, rien
-    /// ne les remplace.
-    static let updateBandHeight: CGFloat = 96
-
-    /// Le panneau dans son état le plus grand. C'est lui qui dimensionne le
-    /// conteneur immobile de la vue racine.
-    static let panelMaxSize = CGSize(width: panelSize.width, height: panelSize.height + updateBandHeight)
 
     /// Rayon des coins bas, accordé à l'œil sur celui de la découpe physique :
     /// plus petit, la forme paraît pointue à côté du notch.
@@ -137,13 +147,28 @@ enum Theme {
 
     /// Épaisseur de la barre de session.
     static let barHeight: CGFloat = 2
-    /// Largeur du repère KITT posé sur la barre.
+    /// Pas du repère KITT : sa position suit la part écoulée sur la largeur de
+    /// la barre moins ce pas, pour ne jamais en sortir.
     static let kittWidth: CGFloat = 4
+    /// Hauteur dont le repère dépasse des carrés : sans elle, il se perd sur un
+    /// remplissage HDR aussi lumineux que lui.
+    static let kittRise: CGFloat = 1
+    /// Repère sur la barre en trait : un trait fin qui dépasse du trait.
+    static let kittNeedleSize = CGSize(width: 2, height: 4)
+    /// Vide taillé dans le remplissage de chaque côté du repère : il détache le
+    /// trait blanc d'un saumon HDR où il se fondait.
+    static let kittNotchGap: CGFloat = 1.5
     /// Le repère est bien plus petit que la barre : sans surcroît d'intensité,
     /// le halo de celle-ci l'avale. Le gain porte surtout sur l'opacité, pour
     /// concentrer l'éclat plutôt que d'élargir un halo qui noierait la barre.
     static let kittGlowOpacityBoost: Double = 1.7
     static let kittGlowRadiusBoost: Double = 1.2
+    /// Surexposition du trait et du repère quand l'éclat HDR est actif, en
+    /// diaphragmes : chacun double la luminosité. Sans effet sur un écran SDR.
+    static let hdrStops: Double = 3
+    /// Surexposition des chiffres, plus retenue : ils ne doivent pas briller
+    /// autant que la jauge qu'ils commentent.
+    static let digitsHDRStops: Double = 1
     /// Raccord concave vers la barre de menus. Il n'a de sens que lorsque la
     /// forme déborde du notch ; sinon il dessine deux ailes noires de part et
     /// d'autre de la découpe.
@@ -151,9 +176,9 @@ enum Theme {
 
     // MARK: - Typographie
 
-    /// Chiffres des oreilles : discrets mais lisibles d'un coup d'œil.
-    static let inlineDigits = Font.system(size: 9.5, weight: .regular, design: .monospaced)
-        .monospacedDigit()
+    /// Chiffres portés par la barre, en police de marque. Ils prennent la couleur
+    /// de ce qu'ils désignent : la barre pour le quota, le repère pour l'heure.
+    static let inlineDigits = racing(7)
 
     /// Police de marque, la même que le site vitrine.
     ///
@@ -169,8 +194,10 @@ enum Theme {
     // Le panneau tient sur trois tailles et deux opacités : au delà,
     // l'empilement de variantes se lit comme du désordre.
 
-    /// Les deux valeurs du haut du panneau : fines, en chiffres à chasse fixe.
-    static let panelDisplay = Font.system(size: 24, weight: .light).monospacedDigit()
+    /// Les deux valeurs du haut du panneau, dans la police des chiffres du notch.
+    static let panelDisplay = racing(19)
+    /// Le signe % à côté du grand pourcentage.
+    static let panelDisplayUnit = racing(11)
     /// Libellé de touche et ligne d'aide du panneau.
     static let panelMono = Font.system(size: 9, weight: .regular, design: .monospaced)
     /// Le nom de l'app, en tout petit au dessus des valeurs.
@@ -202,6 +229,6 @@ enum Theme {
 
     // MARK: - Seuils
 
-    /// Au delà de ce pourcentage, les chiffres passent à la couleur de la barre.
+    /// Au delà de ce pourcentage, le quota est signalé comme presque épuisé.
     static let alertThreshold: Double = 85
 }

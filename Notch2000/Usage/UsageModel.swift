@@ -23,6 +23,8 @@ final class UsageModel: ObservableObject {
     @Published private(set) var credentialSource: CredentialSource?
     /// Pourcentage forcé pour prévisualiser les couleurs. `nil` = valeur réelle.
     @Published private(set) var previewPercent: Double?
+    /// Minutes restantes forcées avant le renouvellement. `nil` = valeur réelle.
+    @Published private(set) var previewRemainingMinutes: Double?
     /// Recalculé périodiquement pour faire vivre le compte à rebours et le repère de temps.
     @Published private(set) var now: Date = .init()
 
@@ -137,6 +139,22 @@ final class UsageModel: ObservableObject {
 
     var percent: Double { previewPercent ?? snapshot?.percent ?? 0 }
 
+    /// Force un pourcentage depuis la fenêtre de développement. `nil` = valeur réelle.
+    func setPreviewPercent(_ value: Double?) {
+        previewPercent = value
+    }
+
+    /// Force le temps restant avant renouvellement, depuis la fenêtre de développement.
+    func setPreviewRemainingMinutes(_ value: Double?) {
+        previewRemainingMinutes = value
+    }
+
+    /// Heure du renouvellement, aperçu compris.
+    var resetsAt: Date? {
+        if let minutes = previewRemainingMinutes { return now.addingTimeInterval(minutes * 60) }
+        return snapshot?.resetsAt
+    }
+
     /// Fait défiler les trois paliers de couleur, puis revient au quota réel.
     func cyclePreview() {
         switch previewPercent {
@@ -156,7 +174,7 @@ final class UsageModel: ObservableObject {
 
     /// Position du repère KITT : part de la fenêtre de 5 heures déjà écoulée.
     var elapsedFraction: Double? {
-        guard let resetsAt = snapshot?.resetsAt else { return nil }
+        guard let resetsAt else { return nil }
         let remaining = resetsAt.timeIntervalSince(now)
         guard remaining > 0 else { return 1 }
         return min(max(1 - remaining / sessionWindow, 0), 1)
@@ -168,7 +186,7 @@ final class UsageModel: ObservableObject {
 
     /// Libellé de renouvellement, selon le réglage choisi.
     func renewalLabel(_ display: RenewalDisplay) -> String {
-        guard !isSyncing, let resetsAt = snapshot?.resetsAt else {
+        guard !isSyncing, let resetsAt else {
             return display == .target ? "··:··" : "··h··"
         }
 
@@ -187,7 +205,7 @@ final class UsageModel: ObservableObject {
 
     /// Phrase complète affichée sous le grand chiffre du panneau.
     func renewalSubtitle(_ display: RenewalDisplay) -> String {
-        guard !isSyncing, snapshot?.resetsAt != nil else { return String(localized: "renouvellement inconnu") }
+        guard !isSyncing, resetsAt != nil else { return String(localized: "renouvellement inconnu") }
         switch display {
         case .target:
             return String(localized: "renouvellement dans \(renewalLabel(.countdown))")

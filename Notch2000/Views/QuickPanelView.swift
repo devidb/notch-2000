@@ -19,7 +19,6 @@ import SwiftUI
 
 struct QuickPanelView: View {
     @ObservedObject var vm: NotchViewModel
-    @ObservedObject var updater = Updater.shared
 
     /// Nom de la touche survolée. À vide, la ligne parle de la connexion.
     @State private var hint: String?
@@ -41,20 +40,11 @@ struct QuickPanelView: View {
 
             hintLine
                 .padding(.top, 8)
-
-            // Le notch se déplie de la hauteur du bandeau : les touches restent
-            // en place, rien ne les remplace.
-            if updater.stage.isPresenting {
-                UpdateView(stage: updater.stage, updater: updater)
-                    .padding(.top, 10)
-                    .transition(.opacity)
-            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 44)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(Theme.digitsFade, value: updater.stage)
         .onAppear { countUp() }
         .onChange(of: vm.usage.percent) { countUp() }
     }
@@ -70,17 +60,19 @@ struct QuickPanelView: View {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text("\(Int(shownPercent.rounded()))")
                         .contentTransition(.numericText(value: shownPercent))
-                        .foregroundStyle(headlineColor)
                     Text("%")
-                        .foregroundStyle(Theme.ivory(0.45))
+                        .font(Theme.panelDisplayUnit)
                 }
+                .foregroundStyle(headlineColor)
             }
 
             Spacer(minLength: 12)
 
+            // Mêmes couleurs que les chiffres du notch : la barre pour le quota,
+            // le repère pour l'heure.
             Text(vm.usage.renewalLabel(vm.settings.renewalDisplay))
                 .contentTransition(.numericText())
-                .foregroundStyle(Theme.ivory)
+                .foregroundStyle(Theme.kitt.hdr(digitsStops))
                 .animation(.spring(response: 0.4, dampingFraction: 0.7), value: vm.settings.renewalDisplay)
         }
         .font(Theme.panelDisplay)
@@ -88,9 +80,12 @@ struct QuickPanelView: View {
     }
 
     private var headlineColor: Color {
-        vm.usage.isAlert || vm.usage.isAtLimit
-            ? Theme.barColors(vm.settings.barPalette, percent: vm.usage.percent).base
-            : Theme.ivory
+        Theme.barColors(vm.settings.barPalette, percent: vm.usage.percent).base.hdr(digitsStops)
+    }
+
+    /// Chiffres poussés en HDR avec la jauge, un cran en dessous.
+    private var digitsStops: Double {
+        vm.settings.hdrEnabled ? Theme.digitsHDRStops : 0
     }
 
     /// Le pourcentage repart de zéro à chaque ouverture : les chiffres défilent
@@ -139,6 +134,15 @@ struct QuickPanelView: View {
         }
 
         PanelKey(
+            label: String(localized: "Éclat HDR"),
+            isOn: settings.hdrEnabled,
+            action: { settings.hdrEnabled.toggle() },
+            onHover: hover
+        ) {
+            HDRGlyph(isOn: settings.hdrEnabled)
+        }
+
+        PanelKey(
             label: String(localized: "Repère de temps"),
             isOn: settings.kittEnabled,
             action: { settings.kittEnabled.toggle() },
@@ -146,6 +150,13 @@ struct QuickPanelView: View {
         ) {
             KittGlyph(isOn: settings.kittEnabled)
         }
+
+    }
+
+    /// Seconde rangée : les chiffres, le fonctionnement, l'app.
+    @ViewBuilder
+    private var systemKeys: some View {
+        let settings = vm.settings
 
         PanelKey(
             label: String(localized: "Chiffres") + " · " + (settings.digitsAlwaysVisible ? String(localized: "toujours") : String(localized: "au survol")),
@@ -155,13 +166,6 @@ struct QuickPanelView: View {
         ) {
             DigitsGlyph(isOn: settings.digitsAlwaysVisible)
         }
-
-    }
-
-    /// Seconde rangée : le temps, le fonctionnement, l'app.
-    @ViewBuilder
-    private var systemKeys: some View {
-        let settings = vm.settings
 
         PanelKey(
             label: String(localized: "Renouvellement") + " · " + settings.renewalDisplay.label,
@@ -197,19 +201,6 @@ struct QuickPanelView: View {
         ) {
             IgnitionGlyph(isOn: settings.launchAtLogin)
         }
-
-        PanelKey(
-            label: String(localized: "Mise à jour"),
-            isOn: false,
-            action: updater.checkForUpdates,
-            onHover: hover
-        ) {
-            Image(systemName: "arrow.down.to.line")
-                .font(.system(size: 15, weight: .medium))
-                .symbolEffect(.pulse, isActive: updater.stage == .checking)
-        }
-        .disabled(!Updater.isAvailable || updater.stage.isPresenting)
-        .opacity(Updater.isAvailable ? 1 : 0.35)
 
         QuitKey(label: String(localized: "Maintenir pour quitter"), onHover: hover)
     }
@@ -579,6 +570,19 @@ struct IgnitionGlyph: View {
                     .opacity(isOn ? 1 : 0)
                     .offset(x: 5, y: 3)
             }
+            .animation(.spring(response: 0.35, dampingFraction: 0.5), value: isOn)
+    }
+}
+
+/// Éclat HDR : les trois lettres s'allument, comme un voyant, et rebondissent.
+struct HDRGlyph: View {
+    var isOn: Bool
+
+    var body: some View {
+        Text(verbatim: "HDR")
+            .font(.system(size: 11, weight: .heavy, design: .monospaced))
+            .opacity(isOn ? 1 : 0.45)
+            .scaleEffect(isOn ? 1 : 0.9)
             .animation(.spring(response: 0.35, dampingFraction: 0.5), value: isOn)
     }
 }

@@ -19,6 +19,8 @@ struct SessionDots: View {
     var colors: (base: Color, vivid: Color)
     var glow: GlowIntensity
     var cornerRadius: CGFloat
+    /// Surexposition HDR des carrés allumés et du repère, en diaphragmes.
+    var hdrStops: Double
 
     var body: some View {
         GeometryReader { proxy in
@@ -27,13 +29,13 @@ struct SessionDots: View {
 
             ZStack(alignment: .bottomLeading) {
                 off(layout)
-                    .modifier(Settled())
+                    .modifier(Settled(width: proxy.size.width))
                     .modifier(DotsInNotch(size: proxy.size, cornerRadius: cornerRadius))
 
                 litRow(layout, lit: lit)
                     .animation(Theme.fillAnimation, value: fill)
                     .animation(Theme.fillAnimation, value: colors.vivid)
-                    .modifier(Settled())
+                    .modifier(Settled(width: proxy.size.width))
                     .modifier(DotsInNotch(size: proxy.size, cornerRadius: cornerRadius))
                     .shadow(color: colors.vivid.opacity(haloOpacity(0.95)), radius: halo(2), y: halo(2))
                     .shadow(color: colors.vivid.opacity(haloOpacity(0.8)), radius: halo(5), y: halo(4))
@@ -42,7 +44,7 @@ struct SessionDots: View {
                 if showKitt, let elapsed {
                     kitt(layout, index: layout.index(for: elapsed))
                         .animation(Theme.fillAnimation, value: elapsed)
-                        .modifier(Settled())
+                        .modifier(Settled(width: proxy.size.width))
                         .modifier(DotsInNotch(size: proxy.size, cornerRadius: cornerRadius))
                         .shadow(
                             color: .white.opacity(haloOpacity(1, boost: Theme.kittGlowOpacityBoost)),
@@ -82,7 +84,7 @@ struct SessionDots: View {
     /// Les carrés allumés : un seul dégradé, du départ à la pointe, découpé par
     /// les carrés. La progression s'échauffe vers sa pointe, comme la barre.
     private func litRow(_ layout: Layout, lit: Int) -> some View {
-        LinearGradient(colors: [colors.base, colors.vivid], startPoint: .leading, endPoint: .trailing)
+        LinearGradient(colors: [colors.base.hdr(hdrStops), colors.vivid.hdr(hdrStops)], startPoint: .leading, endPoint: .trailing)
             .frame(width: layout.span(lit), height: Theme.dotSize)
             .mask(alignment: .leading) {
                 ZStack(alignment: .leading) {
@@ -99,15 +101,19 @@ struct SessionDots: View {
 
     private func kitt(_ layout: Layout, index: Int) -> some View {
         Rectangle()
-            .fill(Theme.kitt)
-            .frame(width: Theme.dotSize, height: Theme.dotSize)
+            .fill(Theme.kitt.hdr(hdrStops))
+            // Un cran plus haut que les carrés, comme sur la barre.
+            .frame(width: Theme.dotSize, height: Theme.dotSize + Theme.kittRise)
             .offset(x: layout.x(index))
     }
 
     // MARK: - Lueur, reprise de SessionBar
 
+    ///
+    /// Le surcroît du repère ne vaut qu'en lueur intense : il sert à le détacher
+    /// d'un halo de barre puissant. En lueur douce, le repère baisse comme elle.
     private func halo(_ value: Double, boost: Double = 1) -> Double {
-        value * glow.scale * boost
+        value * glow.scale * (glow == .strong ? boost : 1)
     }
 
     private func haloOpacity(_ value: Double, boost: Double = 1) -> Double {
@@ -156,16 +162,22 @@ struct SessionDots: View {
     }
 }
 
-/// Les carrés se posent directement à leur place définitive : seule la découpe
-/// suit le ressort de la forme et les révèle. Sans cela, chaque carré glisserait
-/// avec son propre retard pendant que le notch s'ouvre ou se referme.
+/// Quand la largeur change (le panneau s'ouvre ou se referme), les carrés se
+/// posent directement à leur place définitive : seule la découpe suit le
+/// ressort de la forme et les révèle. Sans cela, chaque carré glisserait avec
+/// son propre retard.
+///
+/// Au survol, seule la hauteur change : la rangée descend alors d'un bloc avec
+/// le ressort, comme le trait, au lieu de sauter à sa place.
 ///
 /// Posé à l'extérieur des `.animation(_:value:)` de la rangée : il efface
 /// l'animation héritée de la forme, puis celles-ci remettent la leur quand le
 /// remplissage ou la couleur changent vraiment.
 private struct Settled: ViewModifier {
+    var width: CGFloat
+
     func body(content: Content) -> some View {
-        content.transaction { $0.animation = nil }
+        content.transaction(value: width) { $0.animation = nil }
     }
 }
 

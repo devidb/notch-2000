@@ -82,8 +82,9 @@ final class Settings: ObservableObject {
     @PublishedPersist(key: "glowIntensity", defaultValue: GlowIntensity.strong)
     var glowIntensity: GlowIntensity
 
-    @PublishedPersist(key: "hapticFeedback", defaultValue: true)
-    var hapticFeedback: Bool
+    /// Trait et repère poussés au delà du blanc SDR, sur les écrans HDR.
+    @PublishedPersist(key: "hdrEnabled", defaultValue: true)
+    var hdrEnabled: Bool
 
     private init() {}
 

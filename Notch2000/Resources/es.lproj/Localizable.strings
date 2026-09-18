@@ -50,28 +50,6 @@
 "La session Claude Code a expiré. Reconnectez-vous avec `claude`." = "Tu sesión de Claude Code ha caducado. Vuelve a iniciar sesión con `claude`.";
 "Le service a répondu %lld." = "El servicio respondió %lld.";
 "Réponse inattendue du service d'utilisation." = "Respuesta inesperada del servicio de uso.";
-/* Mise à jour */
-"RECHERCHE" = "BUSCANDO";
-"MISE À JOUR" = "ACTUALIZACIÓN";
-"TÉLÉCHARGEMENT" = "DESCARGA";
-"PRÉPARATION" = "PREPARACIÓN";
-"PRÊT" = "LISTO";
-"INSTALLATION" = "INSTALACIÓN";
-"À JOUR" = "AL DÍA";
-"ÉCHEC" = "ERROR";
-"Interrogation du serveur de mises à jour…" = "Consultando el servidor de actualizaciones…";
-"La version %@ est disponible. Vous utilisez la %@." = "La versión %@ está disponible. Estás usando la %@.";
-"Récupération de la nouvelle version." = "Obteniendo la nueva versión.";
-"Décompression et vérification de la signature." = "Descomprimiendo y verificando la firma.";
-"La mise à jour est prête. Notch2000 va redémarrer." = "La actualización está lista. Notch2000 se reiniciará.";
-"La version %@ est prête. Notch2000 va redémarrer." = "La versión %@ está lista. Notch2000 se reiniciará.";
-"Installation en cours, ne quittez pas l'application." = "Instalando, no salgas de la aplicación.";
-"Notch2000 %@ est la dernière version." = "Notch2000 %@ es la última versión.";
-"ANNULER" = "CANCELAR";
-"INSTALLER" = "INSTALAR";
-"PLUS TARD" = "MÁS TARDE";
-"REDÉMARRER" = "REINICIAR";
-"FERMER" = "CERRAR";
 /* Touches du panneau */
 "Barre" = "Barra";
 "carrés" = "cuadrados";
@@ -82,8 +60,8 @@
 "Chiffres" = "Cifras";
 "toujours" = "siempre";
 "au survol" = "al pasar el cursor";
-"Mise à jour" = "Actualización";
 "Maintenir pour quitter" = "Mantén para salir";
 "Quitter Notch2000" = "Salir de Notch2000";
 "À autoriser dans les Réglages Système" = "Autorízalo en Ajustes del Sistema";
 "Relire les identifiants" = "Releer las credenciales";
+"Éclat HDR" = "Brillo HDR";

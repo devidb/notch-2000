@@ -20,6 +20,8 @@ struct SessionBar: View {
     var glow: GlowIntensity
     /// Rayon des coins de la forme, qui taille les extrémités de la barre.
     var cornerRadius: CGFloat
+    /// Surexposition HDR du trait et du repère, en diaphragmes. 0 = SDR.
+    var hdrStops: Double
 
     @State private var scanPhase = false
 
@@ -54,13 +56,14 @@ struct SessionBar: View {
             // La progression s'échauffe vers sa pointe : l'œil suit le dégradé.
             .fill(
                 LinearGradient(
-                    colors: [colors.base, colors.vivid],
+                    colors: [bright(colors.base), bright(colors.vivid)],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
             )
             .frame(width: max(width * fill, 0), height: Theme.barHeight)
             .modifier(InNotch(width: width, height: height, cornerRadius: cornerRadius))
+            .mask { notchCut(width: width, height: height) }
             // Trois lueurs superposées : un cœur incandescent, un halo proche,
             // un débord diffus. Appliquées après la taille, elles rayonnent au
             // delà de la forme alors que le trait, lui, y reste enfermé.
@@ -72,13 +75,36 @@ struct SessionBar: View {
             .shadow(color: colors.base.opacity(haloOpacity(0.55)), radius: halo(12), y: halo(10))
             .animation(Theme.fillAnimation, value: fill)
             .animation(Theme.fillAnimation, value: colors.vivid)
+            .animation(Theme.fillAnimation, value: elapsed)
+    }
+
+    /// Masque du remplissage : plein, sauf une entaille de part et d'autre du
+    /// repère.
+    private func notchCut(width: CGFloat, height: CGFloat) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            Rectangle()
+            if showKitt, let elapsed {
+                Rectangle()
+                    .frame(width: Theme.kittNeedleSize.width + Theme.kittNotchGap * 2, height: height)
+                    .offset(x: kittX(width: width, at: elapsed) - Theme.kittNotchGap)
+                    .blendMode(.destinationOut)
+            }
+        }
+        .compositingGroup()
+        .frame(width: width, height: height, alignment: .bottomLeading)
+    }
+
+    /// Bord gauche du repère : son centre suit la part écoulée.
+    private func kittX(width: CGFloat, at position: Double) -> CGFloat {
+        (width - Theme.kittWidth) * position + (Theme.kittWidth - Theme.kittNeedleSize.width) / 2
     }
 
     private func kitt(width: CGFloat, height: CGFloat, at position: Double) -> some View {
         RoundedRectangle(cornerRadius: 1, style: .continuous)
-            .fill(Theme.kitt)
-            .frame(width: Theme.kittWidth, height: Theme.barHeight)
-            .offset(x: (width - Theme.kittWidth) * position)
+            .fill(bright(Theme.kitt))
+            // Un trait fin plus haut que la barre, détaché par son entaille.
+            .frame(width: Theme.kittNeedleSize.width, height: Theme.kittNeedleSize.height)
+            .offset(x: kittX(width: width, at: position))
             .modifier(InNotch(width: width, height: height, cornerRadius: cornerRadius))
             // Cœur blanc serré, puis deux halos : c'est le cœur qui détache le
             // repère du remplissage, pas l'étendue du halo.
@@ -120,10 +146,16 @@ struct SessionBar: View {
 
     private var scannerWidth: CGFloat { 26 }
 
+    /// Couleur du trait et du repère, surexposée en HDR si le réglage est actif.
+    private func bright(_ color: Color) -> Color { color.hdr(hdrStops) }
+
     /// Applique l'intensité choisie aux rayons comme aux décalages, pour que la
     /// lueur garde son orientation vers le bas quelle que soit sa force.
+    ///
+    /// Le surcroît du repère ne vaut qu'en lueur intense : il sert à le détacher
+    /// d'un halo de barre puissant. En lueur douce, le repère baisse comme elle.
     private func halo(_ value: Double, boost: Double = 1) -> Double {
-        value * glow.scale * boost
+        value * glow.scale * (glow == .strong ? boost : 1)
     }
 
     /// Même règle pour les opacités, bornées à 1 une fois le gain appliqué.
@@ -148,3 +180,4 @@ private struct InNotch: ViewModifier {
             .clipShape(NotchShape(cornerRadius: cornerRadius, tuck: 0))
     }
 }
+

@@ -30,6 +30,8 @@ Il n'y a pas de suite de tests. Pour vérifier visuellement les états sans cons
 N2K_FAKE_PCT=88 N2K_FAKE_RESET_MIN=36 open -a Notch2000
 ```
 
+Une fenêtre de développement (`Notch2000/Debug/DebugWindow.swift`) force le pourcentage et le temps restant par curseurs et relève la marge HDR. Elle est mise en commentaire pour la publication : pour la rétablir, décommenter le fichier et l'appel dans `AppDelegate`, puis lancer avec `N2K_DEBUG=1`.
+
 ## Architecture
 
 Trois couches, reliées par Combine et SwiftUI :
@@ -46,6 +48,7 @@ Trois couches, reliées par Combine et SwiftUI :
 - **Signature** : le build local signe avec l'identité Developer ID (voir `project.yml` et `build.sh`). Une signature ad hoc change d'empreinte à chaque compilation et fait redemander l'accès au trousseau. Le runtime durci est requis par la notarisation.
 - **API d'utilisation** : l'en-tête `User-Agent` est obligatoire, sans lui l'API répond 429 systématiquement. En cas de 429, respecter un plancher de 180 s avant nouvelle tentative.
 - **Jeton long terme** : un `CLAUDE_CODE_OAUTH_TOKEN` ne fonctionne pas, il n'a pas la portée `user:profile` requise par l'API d'utilisation. Le trousseau est la seule source.
+- **HDR et notification d'écran** : macOS envoie `didChangeScreenParametersNotification` quand la marge HDR varie, ce que provoque `HighDynamicRange`. `AppDelegate` ne reconstruit donc la fenêtre que si la géométrie des écrans a changé ; reconstruire à chaque notification recrée la fenêtre en boucle (gels, notch dessiné à gauche).
 - **Localisation** : les chaînes utilisateur passent par `String(localized:)` avec des `Localizable.strings` dans `Resources/{fr,en,de,es}.lproj`. Toute nouvelle chaîne doit être ajoutée aux quatre.
 
 ## Publication

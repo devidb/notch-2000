@@ -21,10 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // sont recalculés en local, et le panneau relit le quota à son ouverture.
         usage = UsageModel(refreshInterval: 60)
         usage.start()
+        // Fenêtre de développement, désactivée pour la publication : voir DebugWindow.swift.
+        // DebugWindow.showIfEnabled(usage: usage)
 
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(rebuildApplicationWindows),
+            selector: #selector(screenParametersDidChange),
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
         )
@@ -45,7 +47,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return NSScreen.buildin ?? .main
     }
 
-    @objc func rebuildApplicationWindows() {
+    /// Géométrie des écrans au dernier montage de la fenêtre.
+    private var screenLayout: [String] = []
+
+    /// La géométrie qui compte pour la fenêtre : taille et notch de chaque écran.
+    private var currentScreenLayout: [String] {
+        NSScreen.screens.map { "\($0.frame)|\($0.notchSize)" }
+    }
+
+    /// macOS envoie aussi cette notification quand la marge HDR de l'écran
+    /// varie, ce qui arrive dès que la jauge change sa façon d'afficher le HDR.
+    /// Reconstruire alors la fenêtre relance le HDR, donc une nouvelle variation :
+    /// la fenêtre était recréée des dizaines de fois d'affilée. On ne reconstruit
+    /// que si la géométrie a réellement changé.
+    @objc private func screenParametersDidChange() {
+        guard currentScreenLayout != screenLayout else { return }
+        rebuildApplicationWindows()
+    }
+
+    private func rebuildApplicationWindows() {
+        screenLayout = currentScreenLayout
         mainWindowController?.destroy()
         mainWindowController = nil
         guard let screen = findScreenFitsOurNeeds() else { return }
