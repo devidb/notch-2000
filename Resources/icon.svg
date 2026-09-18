@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Icône de Notch2000.
+
+  Le sujet de l'app tient en une image : la découpe du notch, et sous son bord
+  la ligne de session qui s'allume. Le cadrage reprend les proportions réelles,
+  le notch occupant le haut du carré, pour que l'icône se lise même en 16 px.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Fond chaud sombre, le même que le canvas de design. -->
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#24221F"/>
+      <stop offset="1" stop-color="#121110"/>
+    </linearGradient>
+
+    <!-- La barre s'échauffe vers sa pointe, comme dans l'app. -->
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FE8E69"/>
+      <stop offset="1" stop-color="#FFA385"/>
+    </linearGradient>
+
+    <!-- Halo dirigé vers le bas : dans l'app, il ne remonte jamais dans la découpe. -->
+    <filter id="glowNear" x="-60%" y="-60%" width="220%" height="320%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feOffset in="b" dy="10" result="o"/>
+      <feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glowFar" x="-80%" y="-80%" width="260%" height="380%">
+      <feGaussianBlur stdDeviation="30"/>
+      <feOffset dy="26"/>
+    </filter>
+
+    <clipPath id="plate">
+      <rect x="64" y="64" width="896" height="896" rx="200"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#plate)">
+    <rect x="64" y="64" width="896" height="896" fill="url(#bg)"/>
+
+    <!-- La découpe, ancrée au bord haut comme sur un écran. -->
+    <path fill="#000000"
+          d="M 268 64
+             L 756 64
+             L 756 468
+             Q 756 528 696 528
+             L 328 528
+             Q 268 528 268 468
+             Z"/>
+
+    <!-- Halo diffus, largement débordant sous la ligne. -->
+    <rect x="300" y="500" width="424" height="16" rx="8"
+          fill="#FE8E69" opacity="0.5" filter="url(#glowFar)"/>
+
+    <!-- La ligne de session : remplie aux deux tiers, taillée par les coins. -->
+    <rect x="300" y="500" width="290" height="20" rx="10"
+          fill="url(#bar)" filter="url(#glowNear)"/>
+
+    <!-- Le repère de temps, en retrait dans la partie consommée. -->
+    <rect x="470" y="498" width="26" height="24" rx="8" fill="#FFF6EE"/>
+  </g>
+</svg>

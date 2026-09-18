@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notch2000</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <!-- Police de marque provisoire : remplacer Michroma par la police racing retenue -->
+  <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+  <style>
+    @property --tw { syntax: "<length>"; inherits: true; initial-value: 160px; }
+    @property --top { syntax: "<length>"; inherits: true; initial-value: 48px; }
+    @property --bw { syntax: "<length>"; inherits: true; initial-value: 560px; }
+
+    :root {
+      --clay: #D97757;
+      --clay-hot: #F6A98C;
+      --ivory: #FAF9F5;
+      --ink: #141413;
+      --spring: cubic-bezier(.2, .9, .25, 1.04);
+      --ease-out: cubic-bezier(.2, .8, .2, 1);
+
+      /* Géométrie du notch (web) */
+      --notch-w: 320px;
+      --notch-w-hover: 440px;
+      --notch-w-open: 560px;
+      --notch-h: 48px;
+      --notch-h-open: 344px;
+      --notch-r: 16px;
+      --notch-r-open: 32px;
+
+      /* Données de démo */
+      --session: 62%;
+      --elapsed: 47%;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #000;
+      color: var(--ivory);
+      font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ---------- Faisceau ---------- */
+    .beam {
+      --tw: 160px; --top: var(--notch-h); --bw: min(560px, 45vw);
+      position: fixed; inset: 0; pointer-events: none;
+      transition: --tw 380ms var(--spring), --top 380ms var(--spring), --bw 380ms var(--spring);
+    }
+    body.is-hover .beam { --tw: 220px; }
+    body.is-open .beam { --tw: 280px; --top: var(--notch-h-open); --bw: min(700px, 55vw); }
+
+    .beam__shape {
+      position: absolute; inset: 0;
+      clip-path: polygon(
+        calc(50% - var(--tw)) var(--top),
+        calc(50% + var(--tw)) var(--top),
+        calc(50% + var(--bw)) 100%,
+        calc(50% - var(--bw)) 100%
+      );
+    }
+    .beam__soft { position: absolute; inset: 0; filter: blur(28px); opacity: .9; }
+    .beam__soft .beam__shape { background: linear-gradient(180deg, rgba(217,119,87,.34) 0%, rgba(217,119,87,.12) 50%, rgba(217,119,87,0) 100%); }
+    .beam__core { background: linear-gradient(180deg, rgba(246,169,140,.20) 0%, rgba(217,119,87,.06) 55%, rgba(217,119,87,0) 100%); }
+    .beam__lines { background: repeating-linear-gradient(180deg, rgba(0,0,0,.45) 0 1px, transparent 1px 4px); }
+    .beam__floor {
+      position: absolute; left: 50%; bottom: -120px; width: 1300px; height: 240px; margin-left: -650px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 50%, rgba(217,119,87,.16) 0%, rgba(217,119,87,0) 70%);
+    }
+
+    /* ---------- Notch ---------- */
+    .scrim { position: fixed; inset: 0; border: 0; background: none; padding: 0; display: none; }
+    body.is-open .scrim { display: block; }
+
+    .notch {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: var(--notch-w); height: var(--notch-h);
+      background: #000; border-radius: 0 0 var(--notch-r) var(--notch-r);
+      transition: width 380ms var(--spring), height 380ms var(--spring), border-radius 380ms ease;
+    }
+    body.is-hover .notch { width: var(--notch-w-hover); }
+    body.is-open .notch { width: var(--notch-w-open); height: var(--notch-h-open); border-radius: 0 0 var(--notch-r-open) var(--notch-r-open); }
+
+    .notch::before, .notch::after {
+      content: ""; position: absolute; top: 0; width: 12px; height: 12px;
+    }
+    .notch::before { left: -12px; background: radial-gradient(circle at 0 100%, transparent 11px, #000 12px); }
+    .notch::after { right: -12px; background: radial-gradient(circle at 100% 100%, transparent 11px, #000 12px); }
+
+    .notch__toggle { position: absolute; inset: 0 0 auto 0; height: var(--notch-h); border: 0; background: none; padding: 0; cursor: pointer; }
+    .notch__toggle:focus-visible { outline: 2px solid var(--clay); outline-offset: -4px; border-radius: 0 0 12px 12px; }
+
+    .notch__digits {
+      position: absolute; left: 0; right: 0; bottom: 12px; padding: 0 20px;
+      display: flex; justify-content: space-between; pointer-events: none;
+      font: 300 13px/1 ui-monospace, "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums;
+      color: rgba(250,249,245,.42); opacity: 0; transition: opacity 180ms ease;
+    }
+    body.is-hover:not(.is-open) .notch__digits { opacity: 1; }
+
+    .notch__panel {
+      position: absolute; left: 0; right: 0; top: 72px; bottom: 36px;
+      display: none; flex-direction: column; align-items: center; gap: 14px;
+    }
+    body.is-open .notch__panel { display: flex; animation: panel-in 260ms ease 160ms both; }
+    @keyframes panel-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+    .wordmark { font-family: "Michroma", sans-serif; font-style: italic; font-size: 34px; line-height: 1; letter-spacing: .06em; padding-top: 10px; }
+    .tagline { font-size: 15px; color: rgba(250,249,245,.62); }
+    .download {
+      margin-top: 26px; height: 52px; padding: 0 30px; border-radius: 26px;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--clay); color: var(--ink); text-decoration: none; font-size: 16px; font-weight: 600;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+    .download:hover { background: #E68A6B; }
+    .download:active { transform: scale(.98); }
+    .meta { font-size: 12px; color: rgba(250,249,245,.45); }
+
+    /* ---------- Barre de session ---------- */
+    .bar { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; }
+    .bar__fill {
+      position: absolute; left: 0; bottom: 0; height: 3px; width: var(--session);
+      background: var(--clay); box-shadow: 0 0 5px rgba(217,119,87,.9), 0 0 14px rgba(217,119,87,.5);
+      animation: fill-grow 900ms var(--ease-out) 2.5s both;
+    }
+    @keyframes fill-grow { from { width: 0; } to { width: var(--session); } }
+
+    .bar__scan {
+      position: absolute; left: 0; bottom: 0; width: 40px; height: 3px; border-radius: 2px;
+      background: linear-gradient(90deg, rgba(246,169,140,0), #FFF1EA 50%, rgba(246,169,140,0));
+      box-shadow: 0 0 12px rgba(246,169,140,.9);
+      animation: kitt 1.2s cubic-bezier(.45,0,.55,1) 0s 2 alternate, vanish 200ms ease 2.4s forwards;
+    }
+    @keyframes kitt { from { left: 0; } to { left: calc(100% - 40px); } }
+    @keyframes vanish { to { opacity: 0; } }
+
+    .bar__kitt { position: absolute; left: calc(var(--elapsed) - 4px); bottom: 0; width: 8px; height: 3px; animation: appear 300ms ease 3.3s both; }
+    .bar__kitt span {
+      display: block; width: 8px; height: 3px; border-radius: 2px;
+      background: #FFF6EE; box-shadow: 0 0 5px rgba(255,255,255,.95), 0 0 14px rgba(255,236,224,.7);
+      transition: opacity 180ms ease;
+    }
+    body.is-hover .bar__kitt span, body.is-open .bar__kitt span { opacity: 0; }
+    @keyframes appear { from { opacity: 0; } to { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .bar__scan { display: none; }
+      .bar__fill, .bar__kitt { animation: none; }
+      .beam, .notch { transition: none; }
+      body.is-open .notch__panel { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="beam" aria-hidden="true">
+    <div class="beam__soft"><div class="beam__shape"></div></div>
+    <div class="beam__shape beam__core"></div>
+    <div class="beam__shape beam__lines"></div>
+    <div class="beam__floor"></div>
+  </div>
+
+  <button class="scrim" type="button" aria-label="Refermer" tabindex="-1"></button>
+
+  <div class="notch">
+    <button class="notch__toggle" type="button" aria-label="Ouvrir Notch2000" aria-expanded="false" aria-controls="panel"></button>
+
+    <div class="notch__digits" aria-hidden="true"><span>62%</span><span>16:40</span></div>
+
+    <div class="notch__panel" id="panel">
+      <span class="wordmark">NOTCH2000</span>
+      <span class="tagline">Le quota de session Claude, au bord du notch.</span>
+      <a class="download" href="#">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+        Télécharger pour macOS
+      </a>
+      <span class="meta">[VERSION] · macOS [MINIMUM] · [TAILLE]</span>
+    </div>
+
+    <div class="bar" aria-hidden="true">
+      <div class="bar__fill"></div>
+      <div class="bar__scan"></div>
+      <div class="bar__kitt"><span></span></div>
+    </div>
+  </div>
+
+  <script>
+    const body = document.body;
+    const notch = document.querySelector('.notch');
+    const toggle = document.querySelector('.notch__toggle');
+    const scrim = document.querySelector('.scrim');
+
+    const setOpen = (open) => {
+      body.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      if (open) body.classList.remove('is-hover');
+    };
+
+    notch.addEventListener('mouseenter', () => { if (!body.classList.contains('is-open')) body.classList.add('is-hover'); });
+    notch.addEventListener('mouseleave', () => body.classList.remove('is-hover'));
+    toggle.addEventListener('click', () => setOpen(!body.classList.contains('is-open')));
+    scrim.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  </script>
+</body>
+</html>

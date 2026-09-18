@@ -1,0 +1,49 @@
+name: Notch2000
+
+options:
+  bundleIdPrefix: app.notch2000
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.10"
+    # Identité stable plutôt qu'une signature ad hoc : sans elle, chaque build
+    # produit une application « inconnue » pour le trousseau, qui redemande
+    # alors l'accès aux identifiants de Claude Code.
+    DEVELOPMENT_TEAM: "4933F4ZXKH"
+    CODE_SIGN_IDENTITY: "Developer ID Application"
+    CODE_SIGN_STYLE: Manual
+    # Apple refuse de notariser sans. L'app n'en souffre pas : elle n'est pas
+    # dans le bac à sable, et lire un élément de trousseau comme observer la
+    # souris restent permis sous runtime durci.
+    ENABLE_HARDENED_RUNTIME: YES
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.6.0"
+
+targets:
+  Notch2000:
+    type: application
+    platform: macOS
+    sources:
+      - path: Notch2000
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/Notch2000.entitlements"
+    dependencies:
+      - package: Sparkle
+    settings:
+      base:
+        PRODUCT_NAME: Notch2000
+        PRODUCT_BUNDLE_IDENTIFIER: app.notch2000.Notch2000
+        INFOPLIST_FILE: Notch2000/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Notch2000/Resources/Notch2000.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_EMIT_LOC_STRINGS: NO
+        COMBINE_HIDPI_IMAGES: YES
