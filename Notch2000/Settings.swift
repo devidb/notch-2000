@@ -34,6 +34,14 @@ enum BarPalette: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+/// Dessin de la jauge : le trait lumineux, ou une rangée de carrés.
+enum BarStyle: String, Codable, CaseIterable, Identifiable {
+    case line
+    case dots
+
+    var id: String { rawValue }
+}
+
 /// Intensité du halo autour de la barre.
 enum GlowIntensity: String, Codable, CaseIterable, Identifiable {
     case soft
@@ -46,21 +54,6 @@ enum GlowIntensity: String, Codable, CaseIterable, Identifiable {
         switch self {
         case .soft: 0.45
         case .strong: 1
-        }
-    }
-}
-
-/// Fréquence d'interrogation du service d'utilisation.
-enum RefreshRate: Int, Codable, CaseIterable, Identifiable {
-    case everyMinute = 60
-    case everyFiveMinutes = 300
-
-    var id: Int { rawValue }
-
-    var label: String {
-        switch self {
-        case .everyMinute: String(localized: "Toutes les minutes")
-        case .everyFiveMinutes: String(localized: "Toutes les 5 minutes")
         }
     }
 }
@@ -83,11 +76,11 @@ final class Settings: ObservableObject {
     @PublishedPersist(key: "barPalette", defaultValue: BarPalette.claude)
     var barPalette: BarPalette
 
+    @PublishedPersist(key: "barStyle", defaultValue: BarStyle.line)
+    var barStyle: BarStyle
+
     @PublishedPersist(key: "glowIntensity", defaultValue: GlowIntensity.strong)
     var glowIntensity: GlowIntensity
-
-    @PublishedPersist(key: "refreshRate", defaultValue: RefreshRate.everyMinute)
-    var refreshRate: RefreshRate
 
     @PublishedPersist(key: "hapticFeedback", defaultValue: true)
     var hapticFeedback: Bool
@@ -96,20 +89,62 @@ final class Settings: ObservableObject {
 
     // MARK: - Ouverture à la connexion
 
-    /// Reflète l'état réel du service de démarrage plutôt qu'une copie persistée.
-    var launchAtLogin: Bool {
-        get { SMAppService.mainApp.status == .enabled }
-        set {
-            objectWillChange.send()
-            do {
-                if newValue {
-                    try SMAppService.mainApp.register()
-                } else {
-                    try SMAppService.mainApp.unregister()
-                }
-            } catch {
-                NSLog("Notch2000: ouverture à la connexion impossible: \(error.localizedDescription)")
-            }
+    /// Ouverture à la connexion, publiée comme les autres réglages.
+    ///
+    /// `SMAppService` est un service système : il répond de façon asynchrone et
+    /// ne prévient personne quand son état change. Le modèle en garde donc une
+    /// copie publiée, que la vue lit comme n'importe quel autre réglage, et qui
+    /// est resynchronisée après chaque écriture et à chaque ouverture du panneau.
+    @Published var launchAtLogin: Bool = Settings.registeredForLogin {
+        didSet {
+            guard !isSyncingLaunchAtLogin, launchAtLogin != oldValue else { return }
+            applyLaunchAtLogin()
         }
+    }
+
+    /// Vrai le temps de recopier l'état du système : la copie ne doit pas
+    /// relancer un enregistrement.
+    private var isSyncingLaunchAtLogin = false
+
+    private static var registeredForLogin: Bool {
+        switch SMAppService.mainApp.status {
+        case .enabled, .requiresApproval: true
+        default: false
+        }
+    }
+
+    /// Relit l'état du système, par exemple après un passage par les Réglages.
+    func refreshLaunchAtLogin() {
+        isSyncingLaunchAtLogin = true
+        launchAtLogin = Self.registeredForLogin
+        isSyncingLaunchAtLogin = false
+    }
+
+    private func applyLaunchAtLogin() {
+        do {
+            if launchAtLogin {
+                try SMAppService.mainApp.register()
+            } else {
+                try SMAppService.mainApp.unregister()
+            }
+        } catch {
+            NSLog("Notch2000: ouverture à la connexion impossible: \(error.localizedDescription)")
+        }
+        // macOS met un instant à répercuter l'écriture ; si elle a échoué, la
+        // touche revient d'elle même à l'état réel.
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(1))
+            self?.refreshLaunchAtLogin()
+        }
+    }
+
+    /// L'ouverture est enregistrée mais attend le feu vert de l'utilisateur.
+    var launchAtLoginNeedsApproval: Bool {
+        SMAppService.mainApp.status == .requiresApproval
+    }
+
+    /// Ouvre le volet des ouvertures automatiques des Réglages Système.
+    func revealLoginItems() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 }

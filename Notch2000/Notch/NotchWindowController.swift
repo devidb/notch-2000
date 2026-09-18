@@ -6,18 +6,21 @@
 //
 
 import Cocoa
+import Combine
 import SwiftUI
 
 /// Hauteur de la fenêtre hôte. Elle doit contenir le panneau ouvert dans son
 /// état le plus grand, et surtout laisser de la place sous lui : la lueur de la
 /// barre déborde d'une vingtaine de points, et le bord de la fenêtre la
 /// trancherait net.
-private let hostWindowHeight: CGFloat = Theme.panelSize.height + 72
+private let hostWindowHeight: CGFloat = Theme.panelMaxSize.height + 72
 
 @MainActor
 final class NotchWindowController: NSWindowController {
     var vm: NotchViewModel?
     weak var screen: NSScreen?
+
+    private var cancellables: Set<AnyCancellable> = []
 
     init(window: NSWindow, screen: NSScreen, usage: UsageModel) {
         self.screen = screen
@@ -41,6 +44,25 @@ final class NotchWindowController: NSWindowController {
 
         contentViewController = NotchViewController(vm)
         window.orderFrontRegardless()
+
+        // Panneau ouvert, la fenêtre prend le clavier : sans cela elle n'est
+        // jamais principale, et le suivi du pointeur qui alimente la ligne
+        // d'aide ne reçoit rien de fiable.
+        vm.$status
+            .receive(on: DispatchQueue.main)
+            .sink { [weak window] status in
+                guard let window, status == .opened else { return }
+                window.makeKeyAndOrderFront(nil)
+            }
+            .store(in: &cancellables)
+
+        // Une app qui passe au premier plan peut réordonner les fenêtres de son
+        // niveau ; on se remet devant sans jamais voler le focus.
+        NSWorkspace.shared.notificationCenter
+            .publisher(for: NSWorkspace.didActivateApplicationNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak window] _ in window?.orderFrontRegardless() }
+            .store(in: &cancellables)
     }
 
     @available(*, unavailable)
@@ -67,6 +89,8 @@ final class NotchWindowController: NSWindowController {
     }
 
     func destroy() {
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
         vm?.destroy()
         vm = nil
         window?.close()

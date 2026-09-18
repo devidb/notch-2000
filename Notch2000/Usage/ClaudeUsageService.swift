@@ -70,28 +70,42 @@ actor ClaudeUsageService {
         session = URLSession(configuration: configuration)
     }
 
-    func fetch() async throws -> UsageSnapshot {
-        if let fake = Self.debugSnapshot() { return fake }
+    /// Le quota, et d'où venaient les identifiants qui ont permis de le lire.
+    func fetch() async throws -> (UsageSnapshot, CredentialSource?) {
+        if let fake = Self.debugSnapshot() { return (fake, nil) }
 
         let (credentials, fromCache) = try loadCredentials()
         do {
-            return try await fetchUsage(using: credentials)
+            return (try await fetchUsage(using: credentials), credentials.source)
         } catch UsageError.unauthorized where fromCache {
             // Claude Code a pu renouveler le jeton depuis notre dernière lecture :
-            // une seule relecture du trousseau, puis on abandonne pour ce tour.
+            // une seule relecture du dépôt, puis on abandonne pour ce tour.
             cached = nil
-            return try await fetchUsage(using: loadCredentials().0)
+            let (fresh, _) = try loadCredentials()
+            return (try await fetchUsage(using: fresh), fresh.source)
         }
     }
 
-    /// Renvoie les identifiants, en relisant le trousseau seulement si nécessaire.
+    /// Oublie les identifiants gardés en mémoire : la prochaine lecture
+    /// retourne au dépôt, donc macOS repose sa question d'autorisation.
+    func forgetCredentials() {
+        cached = nil
+    }
+
+    /// Renvoie les identifiants, en relisant leur dépôt seulement si nécessaire.
     private func loadCredentials() throws -> (ClaudeCredentials, fromCache: Bool) {
         if let cached, !cached.expires(within: expiryMargin) { return (cached, true) }
 
         cached = nil
+
+        // Seuls les identifiants OAuth de la session conviennent. Un jeton de
+        // longue durée déclaré dans les réglages de Claude Code
+        // (`env.CLAUDE_CODE_OAUTH_TOKEN`) ne ferait pas l'affaire : il ne porte
+        // que le droit d'inférence, et l'API d'utilisation le rejette faute de
+        // la portée `user:profile`.
         let fresh: ClaudeCredentials
         do {
-            fresh = try Keychain.claudeCredentials()
+            fresh = try ClaudeCredentialStore.load()
         } catch {
             throw UsageError.notAuthenticated(error.localizedDescription)
         }

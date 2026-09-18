@@ -33,7 +33,13 @@ class NotchWindow: NSWindow {
             .canJoinAllSpaces,
             .ignoresCycle,
         ]
-        level = .statusBar + 8 // kills ibar lol
+        // La lueur descend d'une vingtaine de points sous la barre de menus,
+        // donc en plein territoire des fenêtres ordinaires. Au niveau
+        // `statusBar`, il suffit d'une fenêtre flottante ou d'un panneau modal
+        // pour la recouvrir : on se place au dessus de toutes ces familles.
+        // Seuls les menus déroulants du système partagent ce niveau, et ils
+        // passent devant à l'ouverture, ce qui est le comportement attendu.
+        level = .popUpMenu
         hasShadow = false
     }
 

@@ -9,11 +9,12 @@ import AppKit
 
 let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.notch2000"
 
+/// Numéro publié, celui que l'appcast compare.
+let appShortVersion: String = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0"
+
 let appVersion: String = {
-    let info = Bundle.main.infoDictionary
-    let short = info?["CFBundleShortVersionString"] as? String ?? "0.0"
-    let build = info?["CFBundleVersion"] as? String ?? "0"
-    return "\(short) (\(build))"
+    let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"
+    return "\(appShortVersion) (\(build))"
 }()
 
 /// Dossier de configuration, utilisé par `PublishedPersist`.

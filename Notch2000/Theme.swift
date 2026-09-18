@@ -61,15 +61,74 @@ enum Theme {
     static let panelBackground = Color(red: 0x23 / 255, green: 0x22 / 255, blue: 0x20 / 255)
     static let windowBackground = Color(red: 0x1F / 255, green: 0x1E / 255, blue: 0x1C / 255)
 
+    /// Encre du site vitrine : le texte posé sur un bloc orange.
+    static let ink = Color(red: 0x14 / 255, green: 0x14 / 255, blue: 0x13 / 255)
+
+    // MARK: - Blocs en relief
+    //
+    // Chaque contrôle du panneau est un petit bloc : une face éclairée par le
+    // haut, posée sur une tranche sombre de quelques points. Enfoncer le bloc,
+    // c'est faire descendre la face sur sa tranche. Trois jeux de couleurs
+    // suffisent : neutre, orange, et le creux où rien ne dépasse.
+
+    static let blockTop = Color(red: 0x3C / 255, green: 0x39 / 255, blue: 0x35 / 255)
+    static let blockBottom = Color(red: 0x2A / 255, green: 0x28 / 255, blue: 0x25 / 255)
+    static let blockEdge = Color(red: 0x12 / 255, green: 0x11 / 255, blue: 0x10 / 255)
+
+    static let clayTop = Color(red: 0xF2 / 255, green: 0x93 / 255, blue: 0x70 / 255)
+    static let clayBottom = Color(red: 0xD9 / 255, green: 0x77 / 255, blue: 0x57 / 255)
+    static let clayEdge = Color(red: 0x7E / 255, green: 0x3E / 255, blue: 0x28 / 255)
+
+    /// Fond des creux : pistes d'interrupteur, rail des segments, écran d'aide.
+    static let hollow = Color(red: 0x16 / 255, green: 0x15 / 255, blue: 0x14 / 255)
+
+    /// Épaisseur de la tranche sous les blocs, et rayon de leurs coins. Le rayon
+    /// est volontairement court : des boutons presque carrés, comme sur le site.
+    static let blockDepth: CGFloat = 3
+    static let blockRadius: CGFloat = 5
+
     // MARK: - Métriques du notch
 
     /// Débord de la forme sous la découpe physique : la barre vit dans ces points.
     static let shapeOverhang: CGFloat = 4
+    /// Débord en mode carrés : la rangée est plus haute que le trait.
+    static let dotsOverhang: CGFloat = 10
+
+    static func overhang(_ style: BarStyle) -> CGFloat {
+        style == .dots ? dotsOverhang : shapeOverhang
+    }
+
+    /// Carrés de la jauge : côté, espace minimal entre deux, retrait du bas.
+    static let dotSize: CGFloat = 4
+    static let dotGap: CGFloat = 2
+    static let dotInset: CGFloat = 4
+    /// Carré éteint : juste assez visible pour lire la graduation.
+    static let dotOff = Color(red: 0x1C / 255, green: 0x1B / 255, blue: 0x19 / 255)
     /// Élargissement total au survol, soit 42 pt par oreille : de quoi loger
     /// les chiffres sans les serrer contre la découpe.
     static let hoverWidening: CGFloat = 84
-    /// Taille du panneau, seul écran de réglages de l'app.
-    static let panelSize = CGSize(width: 340, height: 388)
+    /// Taille du panneau, seul écran de réglages de l'app : deux valeurs, deux
+    /// rangées de touches et une ligne d'aide.
+    static let panelSize = CGSize(width: 360, height: 232)
+
+    /// Touches du panneau : hauteur de la face, écart entre deux touches.
+    static let keyHeight: CGFloat = 40
+    /// Rayon des touches : celui du bouton Télécharger du site.
+    static let keyRadius: CGFloat = 7
+    static let keySpacing: CGFloat = 8
+    /// Durée d'appui pour quitter : assez longue pour qu'un clic ne suffise pas.
+    static let quitHoldDuration: Double = 0.8
+    /// Rouge du bouton Quitter pendant l'appui.
+    static let quitFill = emberVivid
+
+    /// Bandeau ajouté sous le panneau quand une mise à jour a quelque chose à
+    /// dire. Le notch se déplie d'autant : les réglages restent visibles, rien
+    /// ne les remplace.
+    static let updateBandHeight: CGFloat = 96
+
+    /// Le panneau dans son état le plus grand. C'est lui qui dimensionne le
+    /// conteneur immobile de la vue racine.
+    static let panelMaxSize = CGSize(width: panelSize.width, height: panelSize.height + updateBandHeight)
 
     /// Rayon des coins bas, accordé à l'œil sur celui de la découpe physique :
     /// plus petit, la forme paraît pointue à côté du notch.
@@ -96,15 +155,35 @@ enum Theme {
     static let inlineDigits = Font.system(size: 9.5, weight: .regular, design: .monospaced)
         .monospacedDigit()
 
+    /// Police de marque, la même que le site vitrine.
+    ///
+    /// Elle est embarquée dans le bundle et déclarée par `ATSApplicationFontsPath`.
+    /// Si elle venait à manquer, `Font.custom` retombe seul sur la police système :
+    /// le panneau reste lisible, il perd juste son accent.
+    ///
+    /// Michroma est large et sans chasse fixe : on la réserve au wordmark, aux
+    /// deux grandes valeurs et aux libellés de boutons. Les rangées de réglages
+    /// restent en San Francisco, seule police vraiment lisible à 11 points.
+    static func racing(_ size: CGFloat) -> Font { .custom("Michroma-Regular", size: size) }
+
     // Le panneau tient sur trois tailles et deux opacités : au delà,
     // l'empilement de variantes se lit comme du désordre.
 
-    /// Les deux valeurs du haut du panneau.
+    /// Les deux valeurs du haut du panneau : fines, en chiffres à chasse fixe.
     static let panelDisplay = Font.system(size: 24, weight: .light).monospacedDigit()
+    /// Libellé de touche et ligne d'aide du panneau.
+    static let panelMono = Font.system(size: 9, weight: .regular, design: .monospaced)
+    /// Le nom de l'app, en tout petit au dessus des valeurs.
+    static let panelWordmark = racing(9)
+    /// Libellés des boutons et des segments.
+    static let panelAction = racing(8)
     /// Libellés des rangées et des contrôles.
     static let panelBody = Font.system(size: 11)
     /// Légendes et pied de panneau.
     static let panelCaption = Font.system(size: 9)
+    /// Ligne d'aide : elle remplace les infobulles, qui ne s'affichent pas au
+    /// dessus d'une fenêtre sans barre de titre posée sur la barre de menus.
+    static let panelHint = Font.system(size: 9.5)
 
     /// Opacité du texte secondaire, la seule nuance admise avec le texte plein.
     static let secondaryOpacity: Double = 0.5

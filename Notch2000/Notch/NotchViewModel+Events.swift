@@ -51,6 +51,13 @@ extension NotchViewModel {
             }
             .store(in: &cancellables)
 
+        // Sparkle a quelque chose à montrer, et le notch est son seul écran :
+        // sans cela, une vérification programmée n'aurait nulle part où parler.
+        NotificationCenter.default.publisher(for: .notchShouldOpen)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.open() }
+            .store(in: &cancellables)
+
         // Le retour haptique reste discret : au plus une impulsion par demi-seconde.
         hapticSender
             .throttle(for: .seconds(0.5), scheduler: DispatchQueue.main, latest: false)
@@ -68,6 +75,13 @@ extension NotchViewModel {
             .store(in: &cancellables)
 
         usage.objectWillChange
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+
+        // L'étape de mise à jour change la hauteur du panneau ouvert : sans ce
+        // relais, le bandeau s'afficherait dans une forme restée trop courte.
+        Updater.shared.objectWillChange
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.objectWillChange.send() }
             .store(in: &cancellables)
