@@ -11,3 +11,6 @@ Notch2000.xcodeproj/
 
 # macOS
 .DS_Store
+
+# Réglages locaux de l'outillage
+.claude/
