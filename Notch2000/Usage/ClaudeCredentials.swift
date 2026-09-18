@@ -132,34 +132,110 @@ enum ClaudeCredentialStore {
 
     // MARK: - Trousseau
 
+    /// Nombre d'entrées dépouillées avant d'abandonner. Chaque lecture de
+    /// données peut demander son autorisation à macOS : un Mac qui a vu passer
+    /// dix comptes ne doit pas valoir dix dialogues.
+    private static let maxCandidates = 3
+
+    /// Cherche les identifiants parmi les entrées du service.
+    ///
+    /// Plusieurs comptes sous la même étiquette sont le cas nominal, pas
+    /// l'exception : un Mac de travail en accumule au fil des connexions. Une
+    /// requête limitée à une entrée en reçoit alors une au hasard, et si ce
+    /// n'est pas celle que Claude Code tient à jour, se reconnecter n'y change
+    /// rien. On les prend donc dans l'ordre de leur dernière modification :
+    /// celle qu'un `claude login` vient d'écrire passe en tête.
     private static func fromKeychain() -> Result<ClaudeCredentials, CredentialsError> {
-        let query: [String: Any] = [
+        // Les attributs ne sont pas la donnée protégée : les énumérer ne
+        // déclenche aucun dialogue d'autorisation.
+        let listing: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll,
+        ]
+
+        var items: CFTypeRef?
+        let status = SecItemCopyMatching(listing as CFDictionary, &items)
+        if let failure = error(for: status) { return .failure(failure) }
+
+        guard let entries = items as? [[String: Any]], !entries.isEmpty else {
+            return .failure(.missing)
+        }
+
+        let ordered = entries.sorted { left, right in
+            modificationDate(of: left) > modificationDate(of: right)
+        }
+
+        // Un jeton périmé reste un meilleur diagnostic qu'un format illisible :
+        // il vaut à l'utilisateur « la session a expiré », qui dit quoi faire.
+        var expired: ClaudeCredentials?
+        var lastFailure: CredentialsError?
+
+        for entry in ordered.prefix(maxCandidates) {
+            switch credentials(forAccount: entry[kSecAttrAccount as String] as? String) {
+            case let .success(credentials):
+                if credentials.isExpired {
+                    expired = expired ?? credentials
+                    continue
+                }
+                return .success(credentials)
+
+            case let .failure(error):
+                // Un refus porte sur le trousseau entier, pas sur cette
+                // entrée-là : insister sur les suivantes ne ferait que répéter
+                // le même dialogue.
+                if error.isRefusal { return .failure(error) }
+                lastFailure = lastFailure ?? error
+            }
+        }
+
+        if let expired { return .success(expired) }
+        return .failure(lastFailure ?? .unexpectedFormat(.keychain))
+    }
+
+    /// Lit la donnée d'une entrée précise, désignée par son compte.
+    private static func credentials(
+        forAccount account: String?
+    ) -> Result<ClaudeCredentials, CredentialsError> {
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        // Sans compte déclaré, l'entrée n'est pas adressable : on retombe sur
+        // la requête large, qui en vaut une autre.
+        if let account { query[kSecAttrAccount as String] = account }
 
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
-
-        switch status {
-        case errSecSuccess:
-            break
-        case errSecItemNotFound:
-            return .failure(.missing)
-        case errSecUserCanceled:
-            return .failure(.userRefused)
-        case errSecAuthFailed:
-            return .failure(.notAuthorized)
-        case errSecInteractionNotAllowed, errSecInteractionRequired:
-            return .failure(.noInteraction)
-        default:
-            return .failure(.keychain(status))
-        }
+        if let failure = error(for: status) { return .failure(failure) }
 
         guard let data = item as? Data else { return .failure(.unexpectedFormat(.keychain)) }
         return parse(data, from: .keychain)
+    }
+
+    private static func modificationDate(of entry: [String: Any]) -> Date {
+        entry[kSecAttrModificationDate as String] as? Date ?? .distantPast
+    }
+
+    /// Traduit un code du Security framework, ou `nil` si tout s'est bien passé.
+    private static func error(for status: OSStatus) -> CredentialsError? {
+        switch status {
+        case errSecSuccess:
+            nil
+        case errSecItemNotFound:
+            .missing
+        case errSecUserCanceled:
+            .userRefused
+        case errSecAuthFailed:
+            .notAuthorized
+        case errSecInteractionNotAllowed, errSecInteractionRequired:
+            .noInteraction
+        default:
+            .keychain(status)
+        }
     }
 
     // MARK: - Fichier
