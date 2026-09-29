@@ -10,6 +10,14 @@
 //  un terminal sans accès à l'agent de sécurité, `claude setup-token`). On lit
 //  les deux, sinon une machine parfaitement connectée paraît déconnectée.
 //
+//  La donnée du trousseau est lue par `/usr/bin/security`, pas par l'API
+//  Security. Claude Code écrit son élément avec cet outil, et chaque écriture
+//  (une par rotation du jeton, toutes les 8 heures) recrée la partition de
+//  l'élément avec le seul `apple-tool:` : le teamid que « Toujours autoriser »
+//  y avait inscrit disparaît, et la lecture suivante par `SecItemCopyMatching`
+//  rouvre le dialogue d'autorisation. `security`, lui, est dans la liste
+//  d'accès de l'élément et dans sa partition, donc il lit sans rien demander.
+//
 
 import Foundation
 import Security
@@ -59,6 +67,9 @@ enum CredentialsError: LocalizedError {
     case unexpectedFormat(CredentialSource)
     /// Le trousseau a répondu autre chose que « trouvé » ou « absent ».
     case keychain(OSStatus)
+    /// `security` a échoué sans code reconnu : son code de sortie et ce qu'il
+    /// a écrit sur la sortie d'erreur.
+    case tool(Int32, String)
 
     var errorDescription: String? {
         switch self {
@@ -81,6 +92,12 @@ enum CredentialsError: LocalizedError {
                 return String(localized: "Trousseau inaccessible (code \(code)).")
             }
             return String(localized: "Trousseau inaccessible (code \(code)) : \(detail)")
+        case let .tool(status, detail):
+            let code = String(status)
+            guard !detail.isEmpty else {
+                return String(localized: "Trousseau inaccessible (code \(code)).")
+            }
+            return String(localized: "Trousseau inaccessible (code \(code)) : \(detail)")
         }
     }
 
@@ -99,9 +116,6 @@ enum ClaudeCredentialStore {
     static let keychainService = "Claude Code-credentials"
 
     /// Lit les identifiants, trousseau d'abord puis fichier.
-    ///
-    /// La première lecture du trousseau déclenche le dialogue d'autorisation de
-    /// macOS, puisque l'élément appartient à une autre application.
     static func load() throws -> ClaudeCredentials {
         switch fromKeychain() {
         case let .success(credentials):
@@ -132,10 +146,12 @@ enum ClaudeCredentialStore {
 
     // MARK: - Trousseau
 
-    /// Nombre d'entrées dépouillées avant d'abandonner. Chaque lecture de
-    /// données peut demander son autorisation à macOS : un Mac qui a vu passer
-    /// dix comptes ne doit pas valoir dix dialogues.
+    /// Nombre d'entrées dépouillées avant d'abandonner. Chaque lecture lance un
+    /// processus : un Mac qui a vu passer dix comptes ne doit pas en valoir dix.
     private static let maxCandidates = 3
+
+    /// Outil en ligne de commande du trousseau, voir l'en-tête du fichier.
+    private static let securityTool = URL(fileURLWithPath: "/usr/bin/security")
 
     /// Cherche les identifiants parmi les entrées du service.
     ///
@@ -194,26 +210,63 @@ enum ClaudeCredentialStore {
         return .failure(lastFailure ?? .unexpectedFormat(.keychain))
     }
 
-    /// Lit la donnée d'une entrée précise, désignée par son compte.
+    /// Lit la donnée d'une entrée précise, désignée par son compte, par
+    /// `security find-generic-password`.
     private static func credentials(
         forAccount account: String?
     ) -> Result<ClaudeCredentials, CredentialsError> {
-        var query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: keychainService,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+        var arguments = ["find-generic-password", "-s", keychainService]
         // Sans compte déclaré, l'entrée n'est pas adressable : on retombe sur
         // la requête large, qui en vaut une autre.
-        if let account { query[kSecAttrAccount as String] = account }
+        if let account { arguments += ["-a", account] }
+        // `-w` n'écrit que la donnée sur la sortie standard, suivie d'un saut
+        // de ligne ; les attributs et les messages vont sur la sortie d'erreur.
+        arguments.append("-w")
 
-        var item: CFTypeRef?
-        let status = SecItemCopyMatching(query as CFDictionary, &item)
-        if let failure = error(for: status) { return .failure(failure) }
+        let process = Process()
+        process.executableURL = securityTool
+        process.arguments = arguments
+        let output = Pipe()
+        let errors = Pipe()
+        process.standardOutput = output
+        process.standardError = errors
 
-        guard let data = item as? Data else { return .failure(.unexpectedFormat(.keychain)) }
+        do {
+            try process.run()
+        } catch {
+            return .failure(.tool(0, error.localizedDescription))
+        }
+        // Tout lire avant d'attendre la fin : un tube plein bloquerait l'outil.
+        var data = output.fileHandleForReading.readDataToEndOfFile()
+        let stderr = errors.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+
+        if process.terminationStatus != 0 {
+            let detail = String(decoding: stderr, as: UTF8.self)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return .failure(error(forExitCode: process.terminationStatus, detail: detail))
+        }
+
+        if data.last == UInt8(ascii: "\n") { data.removeLast() }
+        guard !data.isEmpty else { return .failure(.unexpectedFormat(.keychain)) }
         return parse(data, from: .keychain)
+    }
+
+    /// `security` sort avec l'octet bas du code `OSStatus` qu'il a rencontré :
+    /// on reconnaît ceux qui ont un remède, les autres gardent leur message.
+    private static func error(forExitCode code: Int32, detail: String) -> CredentialsError {
+        switch code {
+        case errSecItemNotFound & 0xFF:
+            .missing
+        case errSecUserCanceled & 0xFF:
+            .userRefused
+        case errSecAuthFailed & 0xFF:
+            .notAuthorized
+        case errSecInteractionNotAllowed & 0xFF, errSecInteractionRequired & 0xFF:
+            .noInteraction
+        default:
+            .tool(code, detail)
+        }
     }
 
     private static func modificationDate(of entry: [String: Any]) -> Date {

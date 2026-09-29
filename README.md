@@ -65,8 +65,14 @@ Claude Code has two possible stores, and Notch2000 reads both: the macOS keychai
 (service `Claude Code-credentials`), its default, and `~/.claude/.credentials.json`,
 the fallback it uses when the keychain is unavailable (remote session, terminal
 without access to the security agent, `claude setup-token`). Reading only the
-keychain would make a perfectly signed in machine look signed out. On first launch,
-macOS asks for permission to access the keychain item.
+keychain would make a perfectly signed in machine look signed out.
+
+The keychain item is read through `/usr/bin/security`, the same tool Claude Code
+uses to write it, rather than through the Security framework. Every time Claude
+Code rotates the token (every 8 hours) it rewrites the item, and that rewrite
+resets the item's access partition: an app that had been granted "Always Allow"
+gets asked again at the next read. `security` is already on the item's access
+list, so it reads without any dialog.
 
 Notch2000 stores no credentials, opens no session of its own, and never modifies
 Claude Code's tokens.
