@@ -27,7 +27,9 @@ struct NotchRootView: View {
         .allowsHitTesting(vm.status == .opened)
         .preferredColorScheme(.dark)
         // Autorise les couleurs HDR de la jauge sur les écrans qui les affichent.
-        .allowedDynamicRange(.high)
+        // Éclat éteint, la fenêtre reste en SDR : sinon elle garde une plage
+        // étendue que macOS retire et rend au gré de l'app de premier plan.
+        .allowedDynamicRange(vm.settings.hdrEnabled ? .high : .standard)
     }
 
     // MARK: - Forme
