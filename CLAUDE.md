@@ -57,14 +57,15 @@ Trois couches, reliées par Combine et SwiftUI :
 
 La chaîne de publication (signature, notarisation, DMG, appcast Sparkle, hébergement Scaleway) vit dans un dépôt privé séparé qui porte les secrets : [devidb/notch-2000-release](https://github.com/devidb/notch-2000-release). Ce dépôt-ci ne contient que le code ; la release publiée correspond au `MARKETING_VERSION` de `project.yml`.
 
-Ce qui se fait ici, dans cet ordre :
+Publier une version, dans cet ordre :
 
-1. **Monter la version aux deux endroits**, ils doivent rester synchronisés : `MARKETING_VERSION` dans `project.yml` et `VERSION` dans `Scripts/build.sh`. Incrémenter aussi `CURRENT_PROJECT_VERSION`, qui est un entier et que Sparkle compare pour décider qu'une mise à jour existe. Commit dédié, intitulé `Version X.Y.Z`, séparé du travail qu'il publie.
-2. **Amener `main`**. Le travail se fait dans un worktree, où `git checkout main` est impossible puisque `main` est déjà extrait dans le dépôt principal : pousser en avance rapide avec `git push origin HEAD:main`, après avoir vérifié que c'en est bien une par `git merge-base --is-ancestor origin/main HEAD`.
-3. **Poser le tag** `vX.Y.Z`, annoté, puis le pousser. C'est la convention des tags existants.
-4. **La release GitHub** s'appelle `Notch2000 vX.Y.Z` et porte un unique fichier joint, `Notch2000.dmg`, signé et notarisé. Ne pas la créer depuis ce dépôt : sans ce DMG elle casse l'appcast Sparkle, et seul le dépôt privé sait le produire. C'est lui qui publie la release et dépose le DMG sur l'hébergement.
+1. **Monter la version aux deux endroits**, ils doivent rester synchronisés : `MARKETING_VERSION` dans `project.yml` et `VERSION` dans `Scripts/build.sh`. Incrémenter aussi `CURRENT_PROJECT_VERSION`, entier que Sparkle compare pour décider qu'une mise à jour existe. Commit dédié, intitulé `Version X.Y.Z`, séparé du travail qu'il publie.
+2. **Amener `main`**. Le travail se fait dans un worktree, où `git checkout main` est impossible puisque `main` est déjà extrait dans le dépôt principal : pousser en avance rapide avec `git push origin HEAD:main`, après l'avoir vérifié par `git merge-base --is-ancestor origin/main HEAD`.
+3. **Ne pas poser le tag à la main.** Le workflow le crée lui même à sa dernière étape et le pousse ici ; un tag déjà présent fait échouer cette étape, donc après le dépôt du DMG sur Scaleway : la mise à jour serait en ligne sans release GitHub.
+4. **Lancer la chaîne**, qui ne part que manuellement, jamais sur un tag ni sur un push : `gh workflow run release.yml --repo devidb/notch-2000-release -f ref=main`. Elle construit, signe, notarise, fabrique le DMG, génère l'appcast, dépose les deux sur Scaleway, puis pose le tag et crée la release `Notch2000 vX.Y.Z`. Compter trois minutes environ.
+5. **Vérifier** que `https://dacode.s3.fr-par.scw.cloud/bin/notch2000/appcast.xml` annonce bien la nouvelle version et que le DMG répond, sans quoi personne ne reçoit la mise à jour.
 
-Il n'y a aucun workflow GitHub Actions dans ce dépôt : rien ne se déclenche tout seul en poussant un tag.
+Il n'y a aucun workflow dans ce dépôt-ci.
 
 ## notch2000-site/
 
