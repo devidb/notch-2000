@@ -19,7 +19,7 @@ PLUGIN="$XCODE/usr/lib/swift/host/plugins/libSwiftUIMacros.dylib"
 SWIFTC="/Library/Developer/CommandLineTools/usr/bin/swiftc"
 TARGET="arm64-apple-macosx14.0"
 
-VERSION="0.2.2"
+VERSION="0.3.0"
 BUILD="4"
 BUNDLE_ID="app.notch2000.Notch2000"
 
