@@ -171,8 +171,8 @@ tracking, rebuild on screen change, settings persistence) is derived from
 [NotchDrop](https://github.com/Lakr233/NotchDrop) by Lakr Aream, distributed under
 the MIT licence. That licence text is kept in `LICENSE-NotchDrop`.
 
-The app ships the [Michroma](https://github.com/googlefonts/Michroma-font) typeface,
-under the SIL Open Font License 1.1, kept in `LICENSE-Michroma`.
+The app ships the [Exo](https://github.com/NDISCOVER/Exo-1.0) typeface by Natanael
+Gama, under the SIL Open Font License 1.1, kept in `LICENSE-Exo`.
 
 ## Licence
 

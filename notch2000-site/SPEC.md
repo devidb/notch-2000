@@ -74,6 +74,5 @@ Les trois valeurs sont des propriétés CSS enregistrées (`@property`) pour que
 
 ## À compléter
 
-- Police de marque : Michroma est provisoire, remplacer par la police racing retenue (classe `.wordmark`).
 - Lien de téléchargement, version, macOS minimum, taille.
 - Comportement mobile (non maquetté).

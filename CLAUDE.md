@@ -28,6 +28,7 @@ Il n'y a pas de suite de tests. Pour vérifier visuellement les états sans cons
 
 ```bash
 N2K_FAKE_PCT=88 N2K_FAKE_RESET_MIN=36 open -a Notch2000
+N2K_FAKE_SYNCING=1 open -a Notch2000   # retient le balayage rouge
 ```
 
 Une fenêtre de développement (`Notch2000/Debug/DebugWindow.swift`) force le pourcentage et le temps restant par curseurs et relève la marge HDR. Elle est mise en commentaire pour la publication : pour la rétablir, décommenter le fichier et l'appel dans `AppDelegate`, puis lancer avec `N2K_DEBUG=1`.

@@ -25,9 +25,6 @@
 "Lecture du quota…" = "Kontingent wird gelesen…";
 "Connecté" = "Verbunden";
 "Déconnecté" = "Nicht verbunden";
-"Lecture du quota auprès d'Anthropic…" = "Kontingent wird bei Anthropic abgefragt…";
-"Quota lu depuis la session Claude Code (%@)." = "Kontingent aus Ihrer Claude-Code-Sitzung gelesen (%@).";
-"Quota simulé par les variables d'environnement de mise au point." = "Kontingent durch die Debug-Umgebungsvariablen simuliert.";
 "trousseau" = "Schlüsselbund";
 "fichier de session" = "Sitzungsdatei";
 /* Réglages */

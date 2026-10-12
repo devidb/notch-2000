@@ -27,8 +27,8 @@ enum Theme {
     static let clayVivid = Color(red: 0xFF / 255, green: 0xA3 / 255, blue: 0x85 / 255)
     /// La teinte d'origine, conservée pour les textes où elle reste lisible.
     static let clayDeep = Color(red: 0xD9 / 255, green: 0x77 / 255, blue: 0x57 / 255)
-    /// Variante claire utilisée par le balayage de synchronisation.
-    static let scanner = Color(red: 0xF0 / 255, green: 0xA5 / 255, blue: 0x8A / 255)
+    /// Balayage joué faute de quota à montrer : le rouge d'un scanner K2000.
+    static let scanner = Color(red: 0xFF / 255, green: 0x1F / 255, blue: 0x12 / 255)
     /// Blanc cassé du design, base de tous les gris de texte.
     static let ivory = Color(red: 0xFA / 255, green: 0xF9 / 255, blue: 0xF5 / 255)
     /// Point repère du temps écoulé, volontairement plus chaud que le blanc pur.
@@ -147,6 +147,8 @@ enum Theme {
 
     /// Épaisseur de la barre de session.
     static let barHeight: CGFloat = 2
+    /// Largeur de la bande qui parcourt la barre pendant le balayage.
+    static let scannerWidth: CGFloat = 34
     /// Pas du repère KITT : sa position suit la part écoulée sur la largeur de
     /// la barre moins ce pas, pour ne jamais en sortir.
     static let kittWidth: CGFloat = 4
@@ -178,7 +180,7 @@ enum Theme {
 
     /// Chiffres portés par la barre, en police de marque. Ils prennent la couleur
     /// de ce qu'ils désignent : la barre pour le quota, le repère pour l'heure.
-    static let inlineDigits = racing(7)
+    static let inlineDigits = racing(9)
 
     /// Police de marque, la même que le site vitrine.
     ///
@@ -186,10 +188,10 @@ enum Theme {
     /// Si elle venait à manquer, `Font.custom` retombe seul sur la police système :
     /// le panneau reste lisible, il perd juste son accent.
     ///
-    /// Michroma est large et sans chasse fixe : on la réserve au wordmark, aux
-    /// deux grandes valeurs et aux libellés de boutons. Les rangées de réglages
-    /// restent en San Francisco, seule police vraiment lisible à 11 points.
-    static func racing(_ size: CGFloat) -> Font { .custom("Michroma-Regular", size: size) }
+    /// On la réserve au wordmark, aux deux grandes valeurs et aux libellés de
+    /// boutons. Les rangées de réglages restent en San Francisco, seule police
+    /// vraiment lisible à 11 points.
+    static func racing(_ size: CGFloat) -> Font { .custom("Exo-Regular", size: size) }
 
     // Le panneau tient sur trois tailles et deux opacités : au delà,
     // l'empilement de variantes se lit comme du désordre.
@@ -224,8 +226,8 @@ enum Theme {
     static let shapeAnimation = Animation.interpolatingSpring(mass: 0.4, stiffness: 180, damping: 14)
     /// Progression de la barre : lente et sans rebond.
     static let fillAnimation = Animation.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.6)
-    /// Balayage pendant la synchronisation.
-    static let scanAnimation = Animation.easeInOut(duration: 1.4).repeatForever(autoreverses: true)
+    /// Aller retour complet du balayage, en secondes.
+    static let scanCycle: Double = 2.8
 
     // MARK: - Seuils
 

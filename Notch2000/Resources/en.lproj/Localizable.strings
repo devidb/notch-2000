@@ -25,9 +25,6 @@
 "Lecture du quota…" = "Reading quota…";
 "Connecté" = "Connected";
 "Déconnecté" = "Disconnected";
-"Lecture du quota auprès d'Anthropic…" = "Reading the quota from Anthropic…";
-"Quota lu depuis la session Claude Code (%@)." = "Quota read from your Claude Code session (%@).";
-"Quota simulé par les variables d'environnement de mise au point." = "Quota simulated by the debugging environment variables.";
 "trousseau" = "keychain";
 "fichier de session" = "session file";
 /* Réglages */

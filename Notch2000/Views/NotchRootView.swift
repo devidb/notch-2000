@@ -173,9 +173,10 @@ struct NotchRootView: View {
         return vm.status == .hovered || vm.settings.digitsAlwaysVisible
     }
 
-    /// Le repère reste visible au survol : l'heure s'y accroche.
+    /// Le repère reste visible dans tous les états : l'heure s'y accroche, au
+    /// survol comme dans le panneau, où elle est posée juste au dessus de lui.
     private var showsKitt: Bool {
-        vm.settings.kittEnabled && vm.status != .opened
+        vm.settings.kittEnabled
     }
 }
 
