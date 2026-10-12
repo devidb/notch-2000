@@ -25,9 +25,6 @@
 "Lecture du quota…" = "Lecture du quota…";
 "Connecté" = "Connecté";
 "Déconnecté" = "Déconnecté";
-"Lecture du quota auprès d'Anthropic…" = "Lecture du quota auprès d'Anthropic…";
-"Quota lu depuis la session Claude Code (%@)." = "Quota lu depuis la session Claude Code (%@).";
-"Quota simulé par les variables d'environnement de mise au point." = "Quota simulé par les variables d'environnement de mise au point.";
 "trousseau" = "trousseau";
 "fichier de session" = "fichier de session";
 /* Réglages */

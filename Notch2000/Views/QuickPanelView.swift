@@ -4,11 +4,11 @@
 //
 //  Seul écran de réglages de l'app : il s'ouvre dans le notch, au clic.
 //
-//  Pas de liste de rangées : deux valeurs en tête, puis une grille de touches
-//  en relief (voir `Chunky.swift`) qui occupe toute la largeur. Chaque touche
-//  ne porte qu'un glyphe, et ce glyphe montre l'état du réglage : il se
-//  transforme quand on appuie. Le seul texte est une ligne d'aide, sous la
-//  grille, qui nomme la touche survolée et raconte la connexion au repos.
+//  Pas de liste de rangées : une grille de touches en relief (voir
+//  `Chunky.swift`) qui occupe toute la largeur, et les deux valeurs en pied, au
+//  dessus de la jauge qu'elles commentent. Chaque touche ne porte qu'un glyphe,
+//  et ce glyphe montre l'état du réglage : il se transforme quand on appuie. Le
+//  seul texte est une ligne d'aide, sous la grille, qui nomme la touche survolée.
 //
 //  La barre du notch, au bas du panneau, sert d'aperçu : elle suit chaque
 //  réglage en direct.
@@ -20,15 +20,11 @@ import SwiftUI
 struct QuickPanelView: View {
     @ObservedObject var vm: NotchViewModel
 
-    /// Nom de la touche survolée. À vide, la ligne parle de la connexion.
+    /// Nom de la touche survolée.
     @State private var hint: String?
-    /// Pourcentage affiché : il part de zéro à l'ouverture et compte jusqu'à sa valeur.
-    @State private var shownPercent: Double = 0
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-
             // Deux rangées franches plutôt qu'une grille paresseuse : celle ci
             // reconstruit ses cellules à chaque redessin, ce qui jette les
             // animations des glyphes avant qu'elles ne soient jouées.
@@ -36,30 +32,30 @@ struct QuickPanelView: View {
                 HStack(spacing: Theme.keySpacing) { displayKeys }
                 HStack(spacing: Theme.keySpacing) { systemKeys }
             }
-            .padding(.top, 16)
 
             hintLine
                 .padding(.top, 8)
+
+            Spacer(minLength: 8)
+
+            // Les deux valeurs commentent la jauge posée au bord bas de la
+            // forme : elles se rangent juste au dessus d'elle, pas au dessus
+            // des touches, qui parlent d'autre chose.
+            header
         }
         .padding(.horizontal, 20)
         .padding(.top, 44)
         .padding(.bottom, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onAppear { countUp() }
-        .onChange(of: vm.usage.percent) { countUp() }
     }
 
     // MARK: - En-tête
 
     private var header: some View {
         HStack(alignment: .firstTextBaseline) {
-            if vm.usage.isSyncing {
-                Text("···")
-                    .foregroundStyle(headlineColor)
-            } else {
+            if !vm.usage.isSyncing {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
-                    Text("\(Int(shownPercent.rounded()))")
-                        .contentTransition(.numericText(value: shownPercent))
+                    Text("\(Int(vm.usage.percent.rounded()))")
                     Text("%")
                         .font(Theme.panelDisplayUnit)
                 }
@@ -71,9 +67,7 @@ struct QuickPanelView: View {
             // Mêmes couleurs que les chiffres du notch : la barre pour le quota,
             // le repère pour l'heure.
             Text(vm.usage.renewalLabel(vm.settings.renewalDisplay))
-                .contentTransition(.numericText())
                 .foregroundStyle(Theme.kitt.hdr(digitsStops))
-                .animation(.spring(response: 0.4, dampingFraction: 0.7), value: vm.settings.renewalDisplay)
         }
         .font(Theme.panelDisplay)
         .lineLimit(1)
@@ -86,17 +80,6 @@ struct QuickPanelView: View {
     /// Chiffres poussés en HDR avec la jauge, un cran en dessous.
     private var digitsStops: Double {
         vm.settings.hdrEnabled ? Theme.digitsHDRStops : 0
-    }
-
-    /// Le pourcentage repart de zéro à chaque ouverture : les chiffres défilent
-    /// jusqu'à la valeur, comme un compteur.
-    private func countUp() {
-        shownPercent = 0
-        DispatchQueue.main.async {
-            withAnimation(.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.9)) {
-                shownPercent = vm.usage.percent
-            }
-        }
     }
 
     // MARK: - Touches
@@ -218,25 +201,28 @@ struct QuickPanelView: View {
 
     // MARK: - Ligne d'aide
 
-    /// Hauteur fixe de deux lignes : le panneau ne saute pas au passage du pointeur.
-    /// Au repos, elle raconte la connexion ; un clic relit le quota.
+    /// Hauteur fixe de deux lignes : le panneau ne saute pas au passage du
+    /// pointeur. Elle nomme la touche survolée, et reste vide au repos tant que
+    /// rien ne cloche. Un clic relit le quota.
     private var hintLine: some View {
-        Button {
+        let line = hint ?? idleMessage
+
+        return Button {
             vm.usage.refreshNow()
         } label: {
             HStack(alignment: .top, spacing: 7) {
-                if hint == nil {
+                if hint == nil, idleMessage != nil {
                     Rectangle()
-                        .fill(accountConnected ? Theme.mint : Theme.ivory(0.3))
+                        .fill(Theme.ivory(0.3))
                         .frame(width: 5, height: 5)
                         .padding(.top, 3)
                 }
-                Text(hint ?? accountDetail)
+                Text(line ?? "")
                     .font(Theme.panelMono)
                     .foregroundStyle(Theme.ivory(hint == nil ? 0.42 : 0.7))
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                    .id(hint ?? "")
+                    .id(line ?? "")
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 3)),
                         removal: .opacity
@@ -247,34 +233,22 @@ struct QuickPanelView: View {
         }
         .buttonStyle(.plain)
         .animation(.easeOut(duration: 0.18), value: hint)
+        // Vide au repos, la ligne ne nomme plus son propre bouton.
+        .accessibilityLabel(String(localized: "Relire le quota maintenant. \(line ?? "")"))
     }
 
-    private var accountConnected: Bool {
-        if case .unavailable = vm.usage.state { return false }
-        return true
-    }
-
-    /// Ce que la ligne raconte au repos : d'où vient le quota, ou pourquoi il manque.
-    private var accountDetail: String {
-        switch vm.usage.state {
-        case .syncing:
-            return String(localized: "Lecture du quota auprès d'Anthropic…")
-        case .live:
-            guard let source = vm.usage.credentialSource else {
-                return String(localized: "Quota simulé par les variables d'environnement de mise au point.")
-            }
-            return String(localized: "Quota lu depuis la session Claude Code (\(source.label)).")
-        case let .unavailable(reason):
-            return reason
-        }
+    /// Seul endroit de l'app qui explique une panne.
+    private var idleMessage: String? {
+        if case let .unavailable(reason) = vm.usage.state { return reason }
+        return nil
     }
 }
 
 // MARK: - Touche
 
 /// Une touche du panneau : un bloc en relief, orange quand le réglage est actif.
-/// Chaque appui la fait descendre sur sa tranche et y fait passer un reflet,
-/// le même que sur le bouton Télécharger du site.
+/// L'appui la fait descendre sur sa tranche et le glyphe marque le changement ;
+/// le reflet, lui, est réservé au survol, où il ne redouble rien.
 private struct PanelKey<Glyph: View>: View {
     var label: String
     var isOn: Bool
@@ -290,7 +264,6 @@ private struct PanelKey<Glyph: View>: View {
             // Le changement passe par une transaction animée : sans elle, les
             // symboles qui se remplacent (la coche, le soleil) sauteraient.
             withAnimation(.spring(response: 0.4, dampingFraction: 0.65)) { action() }
-            flashes += 1
         } label: {
             glyph()
                 .foregroundStyle(isOn ? Theme.ink : Theme.ivory(isHovering ? 1 : 0.8))
@@ -303,6 +276,8 @@ private struct PanelKey<Glyph: View>: View {
         .buttonStyle(KeyStyle(isOn: isOn))
         .onHover { hovering in
             isHovering = hovering
+            // À l'entrée seulement : sortir allumerait la touche qu'on quitte.
+            if hovering { flashes += 1 }
             onHover(label, hovering)
         }
         .animation(.easeOut(duration: 0.16), value: isOn)
@@ -328,7 +303,7 @@ private struct KeyStyle: ButtonStyle {
     }
 }
 
-/// Reflet qui traverse une touche de gauche à droite à chaque appui.
+/// Reflet qui traverse une touche de gauche à droite quand la souris y entre.
 private struct Sheen: View {
     var trigger: Int
     var strength: Double

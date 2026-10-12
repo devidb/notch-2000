@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Notch2000</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <!-- Police de marque provisoire : remplacer Michroma par la police racing retenue -->
-  <link href="https://fonts.googleapis.com/css2?family=Michroma&display=swap" rel="stylesheet">
+  <!-- Police de marque, la même que l'app. L'italique est demandé explicitement :
+       sans lui le navigateur synthétise une oblique au lieu du vrai dessin. -->
+  <link href="https://fonts.googleapis.com/css2?family=Exo:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
   <style>
     @property --tw { syntax: "<length>"; inherits: true; initial-value: 160px; }
     @property --top { syntax: "<length>"; inherits: true; initial-value: 48px; }
@@ -108,7 +109,7 @@
     body.is-open .notch__panel { display: flex; animation: panel-in 260ms ease 160ms both; }
     @keyframes panel-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 
-    .wordmark { font-family: "Michroma", sans-serif; font-style: italic; font-size: 34px; line-height: 1; letter-spacing: .06em; padding-top: 10px; }
+    .wordmark { font-family: "Exo", sans-serif; font-style: italic; font-size: 34px; line-height: 1; letter-spacing: .06em; padding-top: 10px; }
     .tagline { font-size: 15px; color: rgba(250,249,245,.62); }
     .download {
       margin-top: 26px; height: 52px; padding: 0 30px; border-radius: 26px;

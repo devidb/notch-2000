@@ -25,9 +25,6 @@
 "Lecture du quota…" = "Leyendo la cuota…";
 "Connecté" = "Conectado";
 "Déconnecté" = "Desconectado";
-"Lecture du quota auprès d'Anthropic…" = "Leyendo la cuota en Anthropic…";
-"Quota lu depuis la session Claude Code (%@)." = "Cuota leída de tu sesión de Claude Code (%@).";
-"Quota simulé par les variables d'environnement de mise au point." = "Cuota simulada por las variables de entorno de depuración.";
 "trousseau" = "llavero";
 "fichier de session" = "archivo de sesión";
 /* Réglages */

@@ -23,8 +23,6 @@ struct SessionBar: View {
     /// Surexposition HDR du trait et du repère, en diaphragmes. 0 = SDR.
     var hdrStops: Double
 
-    @State private var scanPhase = false
-
     var body: some View {
         GeometryReader { proxy in
             let width = proxy.size.width
@@ -42,11 +40,6 @@ struct SessionBar: View {
             }
             .frame(width: width, height: height, alignment: .bottomLeading)
         }
-        // Simple affectation : l'animer avec `withAnimation` embarquerait toute
-        // la passe de rendu dans une animation « répéter indéfiniment », y
-        // compris les vues voisines.
-        .onAppear { scanPhase = isSyncing }
-        .onChange(of: isSyncing) { scanPhase = isSyncing }
     }
 
     // MARK: - Éléments
@@ -126,25 +119,44 @@ struct SessionBar: View {
             .animation(Theme.fillAnimation, value: position)
     }
 
-    /// Balayage pendant la lecture du quota : la barre est vide, un point la parcourt.
+    /// Balayage pendant la lecture du quota : la barre est vide, un point la
+    /// parcourt.
+    ///
+    /// La position vient de l'horloge et non d'une animation interpolée. Une
+    /// animation « répéter indéfiniment » est suspendue dès que l'app repasse en
+    /// arrière plan, ce qui est son état normal : le point se figeait alors en
+    /// pleine course et ne repartait qu'en la remettant au premier plan. Ici
+    /// chaque image est recalculée depuis le temps courant.
     private func scanner(width: CGFloat, height: CGFloat) -> some View {
-        let travel = max(width - scannerWidth, 0)
-        return RoundedRectangle(cornerRadius: Theme.barHeight / 2, style: .continuous)
-            .fill(
-                LinearGradient(
-                    colors: [Theme.scanner.opacity(0), Theme.scanner, Theme.scanner.opacity(0)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .frame(width: scannerWidth, height: Theme.barHeight)
-            .offset(x: scanPhase ? travel : 0)
-            .modifier(InNotch(width: width, height: height, cornerRadius: cornerRadius))
-            .shadow(color: Theme.scanner.opacity(haloOpacity(0.8)), radius: halo(8), y: halo(6))
-            .animation(Theme.scanAnimation, value: scanPhase)
-    }
+        let travel = max(width - Theme.scannerWidth, 0)
 
-    private var scannerWidth: CGFloat { 26 }
+        // Seule la position est calculée image par image. Le découpage sur les
+        // coins du notch et la lueur restent en dehors, pour que le halo
+        // déborde librement comme celui de la jauge.
+        return TimelineView(.animation) { context in
+            let elapsed = context.date.timeIntervalSinceReferenceDate
+            // Cosinus : le point ralentit à chaque bout avant de repartir.
+            let progress = (1 - cos(2 * .pi * elapsed / Theme.scanCycle)) / 2
+
+            RoundedRectangle(cornerRadius: Theme.barHeight / 2, style: .continuous)
+                // Surexposé comme la jauge, et au même réglage : le balayage ne
+                // doit pas être le seul élément de la barre à rester en SDR.
+                .fill(
+                    LinearGradient(
+                        colors: [Theme.scanner.opacity(0), bright(Theme.scanner), Theme.scanner.opacity(0)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: Theme.scannerWidth, height: Theme.barHeight)
+                .offset(x: progress * travel)
+        }
+        .modifier(InNotch(width: width, height: height, cornerRadius: cornerRadius))
+        // Les trois mêmes couches que la jauge, aux mêmes rayons.
+        .shadow(color: Theme.scanner.opacity(haloOpacity(0.95)), radius: halo(2), y: halo(2))
+        .shadow(color: Theme.scanner.opacity(haloOpacity(0.8)), radius: halo(5), y: halo(4))
+        .shadow(color: Theme.scanner.opacity(haloOpacity(0.55)), radius: halo(12), y: halo(10))
+    }
 
     /// Couleur du trait et du repère, surexposée en HDR si le réglage est actif.
     private func bright(_ color: Color) -> Color { color.hdr(hdrStops) }

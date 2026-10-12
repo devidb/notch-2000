@@ -18,7 +18,9 @@ final class UsageModel: ObservableObject {
         case unavailable(String)
     }
 
-    @Published private(set) var state: State = .syncing
+    @Published private(set) var state: State = .syncing {
+        didSet { updateScanActivity() }
+    }
     /// Dépôt d'où sont venus les derniers identifiants utilisés, montré au pied du panneau.
     @Published private(set) var credentialSource: CredentialSource?
     /// Pourcentage forcé pour prévisualiser les couleurs. `nil` = valeur réelle.
@@ -31,6 +33,7 @@ final class UsageModel: ObservableObject {
     private let service = ClaudeUsageService()
     private var refreshTask: Task<Void, Never>?
     private var tickTask: Task<Void, Never>?
+    private var scanActivity: NSObjectProtocol?
 
     /// Intervalle demandé par l'utilisateur, en secondes.
     var refreshInterval: TimeInterval = 60 {
@@ -55,6 +58,9 @@ final class UsageModel: ObservableObject {
 
     func start() {
         guard refreshTask == nil else { return }
+
+        // L'état de départ est déjà `syncing` : `didSet` ne se déclenche pas.
+        updateScanActivity()
 
         refreshTask = Task { [weak self] in
             while !Task.isCancelled {
@@ -84,6 +90,14 @@ final class UsageModel: ObservableObject {
     /// Effectue une lecture et renvoie le délai à respecter avant la suivante.
     @discardableResult
     private func refreshOnce() async -> TimeInterval {
+        // Aide au développement : retient le balayage, sinon inatteignable sans
+        // se déconnecter de Claude Code. Le test est ici et non au démarrage de
+        // la boucle, parce qu'ouvrir le panneau relit le quota de son côté.
+        if ProcessInfo.processInfo.environment["N2K_FAKE_SYNCING"] == "1" {
+            state = .syncing
+            return 3600
+        }
+
         do {
             let (snapshot, source) = try await service.fetch()
             state = .live(snapshot)
@@ -111,6 +125,22 @@ final class UsageModel: ObservableObject {
 
     func refreshNow() {
         Task { await refreshOnce() }
+    }
+
+    /// App Nap suspend le rendu d'une app accessoire qui n'a pas le focus : au
+    /// bout de quelques secondes, le balayage se fige en pleine course. Tant
+    /// qu'il tourne, on déclare donc une activité. Elle laisse le Mac s'endormir
+    /// normalement : seule la mise en sommeil de l'app est écartée.
+    private func updateScanActivity() {
+        if isSyncing, scanActivity == nil {
+            scanActivity = ProcessInfo.processInfo.beginActivity(
+                options: .userInitiatedAllowingIdleSystemSleep,
+                reason: "Balayage de synchronisation"
+            )
+        } else if !isSyncing, let scanActivity {
+            ProcessInfo.processInfo.endActivity(scanActivity)
+            self.scanActivity = nil
+        }
     }
 
     /// Oublie le jeton en mémoire et relit le dépôt : macOS redemande alors
@@ -180,15 +210,15 @@ final class UsageModel: ObservableObject {
         return min(max(1 - remaining / sessionWindow, 0), 1)
     }
 
+    /// Vide tant qu'il n'y a rien à dire : des pointillés à la place d'un chiffre
+    /// se lisent comme une valeur, alors que le balayage dit déjà l'attente.
     var percentLabel: String {
-        isSyncing ? "···" : "\(Int(percent.rounded()))%"
+        isSyncing ? "" : "\(Int(percent.rounded()))%"
     }
 
     /// Libellé de renouvellement, selon le réglage choisi.
     func renewalLabel(_ display: RenewalDisplay) -> String {
-        guard !isSyncing, let resetsAt else {
-            return display == .target ? "··:··" : "··h··"
-        }
+        guard !isSyncing, let resetsAt else { return "" }
 
         switch display {
         case .target:
