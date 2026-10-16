@@ -27,6 +27,12 @@ repository and are deliberately out of scope here.
 
 Clicking the notch opens a quick settings panel; clicking anywhere else closes it.
 
+![The bar at rest, along the bottom edge of the notch](docs/idle.png)
+
+![The bar near the limit, with the figures showing](docs/alert.png)
+
+![The quick settings panel, open below the notch](docs/panel.png)
+
 ### The time marker
 
 Disabled by default. When enabled, a thin white needle rises from the bar at the position of the
