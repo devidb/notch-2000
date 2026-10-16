@@ -66,7 +66,3 @@ Publier une version, dans cet ordre :
 5. **Vérifier** que `https://dacode.s3.fr-par.scw.cloud/bin/notch2000/appcast.xml` annonce bien la nouvelle version et que le DMG répond, sans quoi personne ne reçoit la mise à jour.
 
 Il n'y a aucun workflow dans ce dépôt-ci.
-
-## notch2000-site/
-
-Maquette autonome du site vitrine : `index.html` (un seul fichier HTML/CSS/JS sans dépendance) et `SPEC.md` qui en décrit les mesures. Indépendante de l'app ; la vitrine réelle vit dans son propre dépôt privé, [devidb/dacodeapp-vitrine](https://github.com/devidb/dacodeapp-vitrine).
