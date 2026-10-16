@@ -8,8 +8,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "0.3.0"
-    CURRENT_PROJECT_VERSION: "5"
+    MARKETING_VERSION: "0.3.1"
+    CURRENT_PROJECT_VERSION: "6"
     SWIFT_VERSION: "5.10"
     # Identité stable plutôt qu'une signature ad hoc : sans elle, chaque build
     # produit une application « inconnue » pour le trousseau, qui redemande
