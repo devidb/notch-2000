@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Le projet
 
-Notch2000 est une app macOS (14+) qui affiche le quota de la session Claude (fenêtre de 5 heures) sous forme d'une fine barre au bord bas du notch du MacBook. Tout le code, les commentaires, les chaînes localisées et les messages de commit sont en français. Le `README.md` fait exception : il est en anglais, parce que le dépôt est public, et il se limite aux informations applicatives utiles à un fork (ce que fait l'app, d'où viennent les données, où sont les classes). Rien sur la construction ni la publication, qui relèvent du dépôt privé.
+Notch2000 est une app macOS (14+) qui affiche le quota de la session Claude (fenêtre de 5 heures) sous forme d'une fine barre au bord bas du notch du MacBook. Tout le code, les commentaires et les chaînes localisées sont en français. Le `README.md` et les messages de commit font exception : ils sont en anglais, parce que le dépôt est public et que l'historique se lit de l'extérieur. Le README se limite aux informations applicatives utiles à un fork (ce que fait l'app, d'où viennent les données, où sont les classes). Rien sur la construction ni la publication, qui relèvent du dépôt privé.
 
 ## Construire
 
