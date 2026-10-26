@@ -72,11 +72,11 @@ Launch at login is not persisted here: it reflects the real state of
 Notch2000 reads the OAuth token that Claude Code stores, then queries Anthropic's
 usage API. Claude Code must therefore be installed and signed in on the machine.
 
-Claude Code has two possible stores, and Notch2000 reads both: the macOS keychain
-(service `Claude Code-credentials`), its default, and `~/.claude/.credentials.json`,
-the fallback it uses when the keychain is unavailable (remote session, terminal
-without access to the security agent, `claude setup-token`). Reading only the
-keychain would make a perfectly signed in machine look signed out.
+The macOS keychain (service `Claude Code-credentials`) is the only store it
+reads. Claude Code can also fall back to a plain file, but Notch2000 draws in
+the notch of a MacBook, so it only ever runs in a local graphical session,
+where the keychain is available by construction. One store, one read path, one
+thing to audit.
 
 The keychain item is read through `/usr/bin/security`, the same tool Claude Code
 uses to write it, rather than through the Security framework. Every time Claude
@@ -129,7 +129,7 @@ Three layers, wired together with Combine and SwiftUI.
 
 | File | Role |
 | --- | --- |
-| `ClaudeCredentials.swift` | Reads the Claude Code OAuth token, from the macOS keychain or from `~/.claude/.credentials.json`, and reports which of the two it used |
+| `ClaudeCredentials.swift` | Reads the Claude Code OAuth token from the macOS keychain, through `/usr/bin/security` |
 | `ClaudeUsageService.swift` | `actor` that queries the usage API, caches the token until expiry, maps errors (`UsageError`) and returns a `UsageSnapshot` |
 | `UsageModel.swift` | `@MainActor ObservableObject` holding the state (`syncing` / `live` / `unavailable`), driving the refresh loop and republishing `now` every 15 s to keep the countdown and the time marker alive |
 

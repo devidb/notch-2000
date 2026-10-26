@@ -25,8 +25,6 @@
 "Lecture du quota…" = "Leyendo la cuota…";
 "Connecté" = "Conectado";
 "Déconnecté" = "Desconectado";
-"trousseau" = "llavero";
-"fichier de session" = "archivo de sesión";
 /* Réglages */
 "Heure cible" = "Hora prevista";
 "Compte à rebours" = "Cuenta atrás";
@@ -39,7 +37,7 @@
 "Vous avez refusé l'accès au trousseau. Actualisez pour que macOS repose la question." = "Has denegado el acceso al llavero. Actualiza para que macOS vuelva a preguntar.";
 "Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000." = "Notch2000 no tiene permiso para leer «Claude Code-credentials». En Acceso a Llaveros, haz doble clic en el elemento, abre la pestaña Control de acceso y añade Notch2000.";
 "Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez." = "Llavero bloqueado o diálogo bloqueado. Abre Acceso a Llaveros, desbloquea «inicio de sesión» y actualiza.";
-"Identifiants Claude Code illisibles (%@). Reconnectez-vous avec `claude`." = "No se han podido leer las credenciales de Claude Code (%@). Vuelve a iniciar sesión con `claude`.";
+"Identifiants Claude Code illisibles. Reconnectez-vous avec `claude`." = "No se han podido leer las credenciales de Claude Code. Vuelve a iniciar sesión con `claude`.";
 "Trousseau inaccessible (code %@) : %@" = "Llavero no disponible (código %@): %@";
 "Trousseau inaccessible (code %@)." = "Llavero no disponible (código %@).";
 /* Service d'utilisation */

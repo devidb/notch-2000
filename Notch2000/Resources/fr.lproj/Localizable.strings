@@ -25,8 +25,6 @@
 "Lecture du quota…" = "Lecture du quota…";
 "Connecté" = "Connecté";
 "Déconnecté" = "Déconnecté";
-"trousseau" = "trousseau";
-"fichier de session" = "fichier de session";
 /* Réglages */
 "Heure cible" = "Heure cible";
 "Compte à rebours" = "Compte à rebours";
@@ -39,7 +37,7 @@
 "Vous avez refusé l'accès au trousseau. Actualisez pour que macOS repose la question." = "Vous avez refusé l'accès au trousseau. Actualisez pour que macOS repose la question.";
 "Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000." = "Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000.";
 "Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez." = "Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez.";
-"Identifiants Claude Code illisibles (%@). Reconnectez-vous avec `claude`." = "Identifiants Claude Code illisibles (%@). Reconnectez-vous avec `claude`.";
+"Identifiants Claude Code illisibles. Reconnectez-vous avec `claude`." = "Identifiants Claude Code illisibles. Reconnectez-vous avec `claude`.";
 "Trousseau inaccessible (code %@) : %@" = "Trousseau inaccessible (code %@) : %@";
 "Trousseau inaccessible (code %@)." = "Trousseau inaccessible (code %@).";
 /* Service d'utilisation */

@@ -2,13 +2,10 @@
 //  ClaudeCredentials.swift
 //  Notch2000
 //
-//  Lecture des identifiants OAuth déposés par Claude Code.
-//
-//  Claude Code a deux dépôts possibles : le trousseau macOS, son choix par
-//  défaut, et un fichier `~/.claude/.credentials.json` sur lequel il retombe
-//  quand le trousseau n'est pas disponible (session distante, connexion depuis
-//  un terminal sans accès à l'agent de sécurité, `claude setup-token`). On lit
-//  les deux, sinon une machine parfaitement connectée paraît déconnectée.
+//  Lecture des identifiants OAuth déposés par Claude Code dans le trousseau
+//  macOS, seul dépôt que Notch2000 consulte : l'app dessine dans le notch d'un
+//  MacBook, donc dans une session graphique locale, où le trousseau est
+//  disponible par construction.
 //
 //  La donnée du trousseau est lue par `/usr/bin/security`, pas par l'API
 //  Security. Claude Code écrit son élément avec cet outil, et chaque écriture
@@ -22,25 +19,11 @@
 import Foundation
 import Security
 
-/// D'où viennent les identifiants, pour pouvoir le dire dans le panneau.
-enum CredentialSource: String {
-    case keychain
-    case file
-
-    var label: String {
-        switch self {
-        case .keychain: String(localized: "trousseau")
-        case .file: String(localized: "fichier de session")
-        }
-    }
-}
-
 /// Identifiants OAuth tels que Claude Code les dépose.
 struct ClaudeCredentials {
     let accessToken: String
     let expiresAt: Date?
     let subscriptionType: String?
-    let source: CredentialSource
 
     var isExpired: Bool { expires(within: 0) }
 
@@ -54,7 +37,7 @@ struct ClaudeCredentials {
 /// Les refus du trousseau ne se soignent pas tous de la même façon : tant que
 /// le panneau ne disait que « Déconnecté », rien ne permettait de les départager.
 enum CredentialsError: LocalizedError {
-    /// Ni trousseau ni fichier : Claude Code n'est pas installé, ou aucune session n'est ouverte.
+    /// Rien dans le trousseau : Claude Code n'est pas installé, ou aucune session n'est ouverte.
     case missing
     /// L'utilisateur a fermé le dialogue d'autorisation sans accepter.
     case userRefused
@@ -63,8 +46,8 @@ enum CredentialsError: LocalizedError {
     /// Trousseau verrouillé, ou macOS a refusé d'afficher le dialogue : c'est le
     /// cas qui se manifeste par un silence complet, sans la moindre fenêtre.
     case noInteraction
-    /// Un dépôt existe mais ne contient pas ce qu'on attend.
-    case unexpectedFormat(CredentialSource)
+    /// L'élément existe mais ne contient pas ce qu'on attend.
+    case unexpectedFormat
     /// Le trousseau a répondu autre chose que « trouvé » ou « absent ».
     case keychain(OSStatus)
     /// `security` a échoué sans code reconnu : son code de sortie et ce qu'il
@@ -81,8 +64,8 @@ enum CredentialsError: LocalizedError {
             return String(localized: "Notch2000 n'est pas autorisé à lire « Claude Code-credentials ». Trousseau d'accès, double-clic sur l'élément, onglet Contrôle d'accès, ajoutez Notch2000.")
         case .noInteraction:
             return String(localized: "Trousseau verrouillé ou dialogue bloqué. Ouvrez Trousseau d'accès et déverrouillez « Connexion », puis actualisez.")
-        case let .unexpectedFormat(source):
-            return String(localized: "Identifiants Claude Code illisibles (\(source.label)). Reconnectez-vous avec `claude`.")
+        case .unexpectedFormat:
+            return String(localized: "Identifiants Claude Code illisibles. Reconnectez-vous avec `claude`.")
         case let .keychain(status):
             // Le libellé du Security framework en dit plus que le code seul.
             // Le code passe par une chaîne : interpolé tel quel, le format de la
@@ -101,8 +84,8 @@ enum CredentialsError: LocalizedError {
         }
     }
 
-    /// L'élément est là, mais sa lecture a été refusée. Le repli par fichier
-    /// n'aurait alors aucun sens : il masquerait la seule piste utile.
+    /// L'élément est là, mais sa lecture a été refusée. Le refus porte sur le
+    /// trousseau entier : inutile d'insister sur les entrées suivantes.
     var isRefusal: Bool {
         switch self {
         case .userRefused, .notAuthorized, .noInteraction: true
@@ -115,32 +98,17 @@ enum ClaudeCredentialStore {
     /// Nom du service utilisé par Claude Code pour son élément de trousseau.
     static let keychainService = "Claude Code-credentials"
 
-    /// Lit les identifiants, trousseau d'abord puis fichier.
+    /// Lit les identifiants dans le trousseau.
     static func load() throws -> ClaudeCredentials {
         switch fromKeychain() {
         case let .success(credentials):
             return credentials
-
-        case let .failure(keychainError):
+        case let .failure(error):
             // Doublé dans le journal système : sur une machine où le panneau ne
             // s'ouvre pas, `log show --predicate 'process == "Notch2000"'`
             // reste le seul moyen de savoir ce que le trousseau a répondu.
-            NSLog("Notch2000: trousseau: %@", keychainError.localizedDescription)
-
-            // Un refus explicite mérite d'être dit tel quel : aller chercher
-            // ensuite un fichier masquerait la vraie raison du silence.
-            if keychainError.isRefusal { throw keychainError }
-
-            switch fromFile() {
-            case let .success(credentials):
-                return credentials
-            case .failure(.missing):
-                // Le fichier n'est qu'un repli : absent, c'est le diagnostic du
-                // trousseau qui décrit le mieux la situation.
-                throw keychainError
-            case let .failure(fileError):
-                throw fileError
-            }
+            NSLog("Notch2000: trousseau: %@", error.localizedDescription)
+            throw error
         }
     }
 
@@ -207,7 +175,7 @@ enum ClaudeCredentialStore {
         }
 
         if let expired { return .success(expired) }
-        return .failure(lastFailure ?? .unexpectedFormat(.keychain))
+        return .failure(lastFailure ?? .unexpectedFormat)
     }
 
     /// Lit la donnée d'une entrée précise, désignée par son compte, par
@@ -248,8 +216,8 @@ enum ClaudeCredentialStore {
         }
 
         if data.last == UInt8(ascii: "\n") { data.removeLast() }
-        guard !data.isEmpty else { return .failure(.unexpectedFormat(.keychain)) }
-        return parse(data, from: .keychain)
+        guard !data.isEmpty else { return .failure(.unexpectedFormat) }
+        return parse(data)
     }
 
     /// `security` sort avec l'octet bas du code `OSStatus` qu'il a rencontré :
@@ -291,40 +259,16 @@ enum ClaudeCredentialStore {
         }
     }
 
-    // MARK: - Fichier
-
-    /// Dossier de configuration de Claude Code, `CLAUDE_CONFIG_DIR` compris.
-    static var configDirectory: URL {
-        let environment = ProcessInfo.processInfo.environment
-        if let custom = environment["CLAUDE_CONFIG_DIR"], !custom.isEmpty {
-            return URL(fileURLWithPath: (custom as NSString).expandingTildeInPath)
-        }
-        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude")
-    }
-
-    private static var credentialsFile: URL {
-        configDirectory.appendingPathComponent(".credentials.json")
-    }
-
-    private static func fromFile() -> Result<ClaudeCredentials, CredentialsError> {
-        guard let data = try? Data(contentsOf: credentialsFile) else { return .failure(.missing) }
-        return parse(data, from: .file)
-    }
-
     // MARK: - Décodage
 
-    /// Les deux dépôts portent la même charge utile.
-    private static func parse(
-        _ data: Data,
-        from source: CredentialSource
-    ) -> Result<ClaudeCredentials, CredentialsError> {
+    private static func parse(_ data: Data) -> Result<ClaudeCredentials, CredentialsError> {
         guard
             let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let oauth = root["claudeAiOauth"] as? [String: Any],
             let token = oauth["accessToken"] as? String,
             !token.isEmpty
         else {
-            return .failure(.unexpectedFormat(source))
+            return .failure(.unexpectedFormat)
         }
 
         // `expiresAt` est un horodatage en millisecondes.
@@ -336,8 +280,7 @@ enum ClaudeCredentialStore {
         return .success(ClaudeCredentials(
             accessToken: token,
             expiresAt: expiry,
-            subscriptionType: oauth["subscriptionType"] as? String,
-            source: source
+            subscriptionType: oauth["subscriptionType"] as? String
         ))
     }
 }

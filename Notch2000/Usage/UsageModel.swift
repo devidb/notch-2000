@@ -21,8 +21,6 @@ final class UsageModel: ObservableObject {
     @Published private(set) var state: State = .syncing {
         didSet { updateScanActivity() }
     }
-    /// Dépôt d'où sont venus les derniers identifiants utilisés, montré au pied du panneau.
-    @Published private(set) var credentialSource: CredentialSource?
     /// Pourcentage forcé pour prévisualiser les couleurs. `nil` = valeur réelle.
     @Published private(set) var previewPercent: Double?
     /// Minutes restantes forcées avant le renouvellement. `nil` = valeur réelle.
@@ -99,9 +97,7 @@ final class UsageModel: ObservableObject {
         }
 
         do {
-            let (snapshot, source) = try await service.fetch()
-            state = .live(snapshot)
-            credentialSource = source
+            state = .live(try await service.fetch())
             now = Date()
             return refreshInterval
         } catch let error as UsageError {
@@ -114,11 +110,9 @@ final class UsageModel: ObservableObject {
                 return refreshInterval
             }
             state = .unavailable(error.localizedDescription)
-            credentialSource = nil
             return max(refreshInterval, 60)
         } catch {
             state = .unavailable(error.localizedDescription)
-            credentialSource = nil
             return max(refreshInterval, 60)
         }
     }

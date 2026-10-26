@@ -70,19 +70,19 @@ actor ClaudeUsageService {
         session = URLSession(configuration: configuration)
     }
 
-    /// Le quota, et d'où venaient les identifiants qui ont permis de le lire.
-    func fetch() async throws -> (UsageSnapshot, CredentialSource?) {
-        if let fake = Self.debugSnapshot() { return (fake, nil) }
+    /// Le quota de la session en cours.
+    func fetch() async throws -> UsageSnapshot {
+        if let fake = Self.debugSnapshot() { return fake }
 
         let (credentials, fromCache) = try loadCredentials()
         do {
-            return (try await fetchUsage(using: credentials), credentials.source)
+            return try await fetchUsage(using: credentials)
         } catch UsageError.unauthorized where fromCache {
             // Claude Code a pu renouveler le jeton depuis notre dernière lecture :
-            // une seule relecture du dépôt, puis on abandonne pour ce tour.
+            // une seule relecture du trousseau, puis on abandonne pour ce tour.
             cached = nil
             let (fresh, _) = try loadCredentials()
-            return (try await fetchUsage(using: fresh), fresh.source)
+            return try await fetchUsage(using: fresh)
         }
     }
 
