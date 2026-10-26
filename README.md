@@ -16,6 +16,11 @@ This README documents the app itself, for users and for anyone forking the code.
 Packaging, signing, notarisation and update hosting live in a separate private
 repository and are deliberately out of scope here.
 
+Licensed under [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0),
+see [Licence](#licence) below. GitHub's sidebar reports no licence for this
+repository, which is wrong: it only recognises a fixed list, and PolyForm is not
+on it. Found a security problem? See [SECURITY.md](SECURITY.md).
+
 ## What you see
 
 | State | Appearance |
@@ -159,7 +164,7 @@ Three layers, wired together with Combine and SwiftUI.
 | `Theme.swift` | Every visual token (colours, metrics, typography, animations, thresholds). Views must not hardcode values |
 | `Settings.swift` | User settings singleton |
 | `Updater.swift` | Sparkle integration with its standard windows, guarded by `#if canImport(Sparkle)` so the app stays complete without it |
-| `Debug/DebugWindow.swift` | Development window (forced percentage and remaining time, HDR headroom readout), commented out in releases |
+| `Debug/DebugWindow.swift` | Development window (forced percentage and remaining time, HDR headroom readout). Ships in every build but only opens under `N2K_DEBUG=1` |
 
 The Xcode project is not checked in: it is generated from `project.yml` by
 [xcodegen](https://github.com/yonaskolb/XcodeGen).
@@ -180,6 +185,9 @@ the MIT licence. That licence text is kept in `LICENSE-NotchDrop`.
 The app ships the [Exo](https://github.com/NDISCOVER/Exo-1.0) typeface by Natanael
 Gama, under the SIL Open Font License 1.1, kept in `LICENSE-Exo`.
 
+Both licences require their notice to travel with what is distributed, so both
+files are copied into `Notch2000.app/Contents/Resources/`.
+
 ## Licence
 
 [PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0),
@@ -193,4 +201,5 @@ The code up to the `v0.1.0` tag was published under the MIT licence and stays
 available under those terms.
 
 The NotchDrop portions keep their own MIT licence, kept in `LICENSE-NotchDrop`,
-whose notice must accompany any distribution. The app bundle ships it.
+whose notice must accompany any distribution. The app bundle ships it, next to
+the Exo font licence.

@@ -52,9 +52,21 @@ sed -e "s|\$(EXECUTABLE_NAME)|Notch2000|g" \
     Notch2000/Resources/Info.plist > "$OUT/Contents/Info.plist"
 
 echo "Icône…"
-# Hors Xcode, pas d'actool pour compiler le catalogue : on dépose l'icône
-# telle quelle, reconnue via CFBundleIconFile.
-cp Notch2000/Resources/AppIcon.icns "$OUT/Contents/Resources/"
+# Hors Xcode, pas d'actool pour compiler le catalogue : on fabrique l'icns
+# depuis le même jeu de PNG, reconnu via CFBundleIconFile. Le nommage de
+# l'appiconset est déjà celui qu'attend iconutil, il n'y a qu'à le recopier.
+# Le fabriquer ici plutôt que le versionner évite d'avoir deux icônes à tenir
+# en phase, dont une seule serait relue lors d'un changement de logo.
+ICONSET=$(mktemp -d)/AppIcon.iconset
+mkdir -p "$ICONSET"
+cp Notch2000/Resources/Assets.xcassets/AppIcon.appiconset/icon_*.png "$ICONSET/"
+iconutil -c icns "$ICONSET" -o "$OUT/Contents/Resources/AppIcon.icns"
+rm -rf "$(dirname "$ICONSET")"
+
+echo "Licences tierces…"
+# La MIT de NotchDrop comme l'OFL d'Exo demandent que leur notice accompagne
+# ce qui est distribué : les laisser dans le dépôt ne suffit pas.
+cp LICENSE-NotchDrop LICENSE-Exo "$OUT/Contents/Resources/"
 
 echo "Police de marque…"
 # Déclarée par `ATSApplicationFontsPath` dans Info.plist : il suffit de la

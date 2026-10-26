@@ -21,8 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // sont recalculés en local, et le panneau relit le quota à son ouverture.
         usage = UsageModel(refreshInterval: 60)
         usage.start()
-        // Fenêtre de développement, désactivée pour la publication : voir DebugWindow.swift.
-        // DebugWindow.showIfEnabled(usage: usage)
+        // Ne s'ouvre que sous `N2K_DEBUG=1`, sans effet sur un lancement normal.
+        DebugWindow.showIfEnabled(usage: usage)
 
         NotificationCenter.default.addObserver(
             self,

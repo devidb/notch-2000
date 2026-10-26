@@ -14,7 +14,11 @@ settings:
     # Identité stable plutôt qu'une signature ad hoc : sans elle, chaque build
     # produit une application « inconnue » pour le trousseau, qui redemande
     # alors l'accès aux identifiants de Claude Code.
-    DEVELOPMENT_TEAM: "4933F4ZXKH"
+    #
+    # L'identifiant d'équipe n'est pas renseigné ici : chacun compile sous la
+    # sienne. Xcode la reprend du compte connecté ; en ligne de commande, la
+    # passer à xcodebuild, `DEVELOPMENT_TEAM=XXXXXXXXXX`.
+    DEVELOPMENT_TEAM: ""
     CODE_SIGN_IDENTITY: "Developer ID Application"
     CODE_SIGN_STYLE: Manual
     # Apple refuse de notariser sans. L'app n'en souffre pas : elle n'est pas
@@ -36,6 +40,13 @@ targets:
         excludes:
           - "Resources/Info.plist"
           - "Resources/Notch2000.entitlements"
+      # La MIT de NotchDrop et l'OFL d'Exo exigent toutes deux que leur notice
+      # accompagne ce qui est distribué : elles voyagent donc dans le bundle,
+      # pas seulement dans le dépôt.
+      - path: LICENSE-NotchDrop
+        buildPhase: resources
+      - path: LICENSE-Exo
+        buildPhase: resources
     dependencies:
       - package: Sparkle
     settings:

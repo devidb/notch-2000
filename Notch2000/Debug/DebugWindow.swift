@@ -6,13 +6,12 @@
 //  et le temps restant sans toucher à l'API, et une ligne relève la marge HDR
 //  de l'écran. Ses textes ne sont pas localisés.
 //
-//  Désactivée pour la publication, mais conservée : pour la rétablir, retirer
-//  le commentaire qui entoure le code ci-dessous et celui de l'appel
-//  `DebugWindow.showIfEnabled` dans `AppDelegate`, puis lancer l'app avec
-//  `N2K_DEBUG=1`.
+//  Elle ne s'ouvre que si `N2K_DEBUG=1` est dans l'environnement, ce qui n'est
+//  jamais le cas d'un lancement ordinaire : le garde suffit, inutile de mettre
+//  le fichier en commentaire pour la publication. Il compile donc avec le
+//  reste, et une API qu'il appelle ne peut pas disparaître en silence.
 //
 
-/*
 import AppKit
 import SwiftUI
 
@@ -91,10 +90,6 @@ private struct DebugView: View {
             }
             .disabled(!timeForced)
 
-
-
-
-
             Text(verbatim: String(
                 format: "Marge HDR : ×%.2f (%.1f diaph.) · app %@",
                 probe.headroom, log2(max(probe.headroom, 1)), probe.isActive ? "active" : "inactive"
@@ -118,4 +113,3 @@ private struct DebugView: View {
         usage.setPreviewRemainingMinutes(timeForced ? remaining : nil)
     }
 }
-*/
